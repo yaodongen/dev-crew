@@ -8,8 +8,6 @@ dev-crew turns one coding-agent session into a manager that runs a real developm
 
 It is a plain [Agent Skill](https://agentskills.io): a `SKILL.md` and two reference files, no code and no dependencies.
 
-> Status: early version. Built for Claude Code; it should work in any agent that supports skills and subagents.
-
 ## Why
 
 Coding agents fail on larger tasks in predictable ways. dev-crew is built around four of them:

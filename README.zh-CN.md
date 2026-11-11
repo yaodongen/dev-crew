@@ -8,8 +8,6 @@ dev-crew 把一个编程 agent 会话变成一位 manager：它按带关卡的�
 
 它是一个纯粹的 [Agent Skill](https://agentskills.io)：一个 `SKILL.md` 加两个参考文件，没有代码，没有依赖。
 
-> 状态：早期版本。面向 Claude Code 编写；支持 skill 和 subagent 的其他 agent 也应该可以使用。
-
 ## 为什么需要它
 
 编程 agent 在较大的需求上出问题的方式很固定，dev-crew 针对其中四种：
