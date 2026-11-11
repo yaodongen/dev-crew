@@ -1,0 +1,14 @@
+{
+  "name": "dev-crew",
+  "description": "A manager plus programmer subagents that run a development task through a gated workflow: clarify, design, independent review, your approval, implement, code review, test, change summary, deploy to dev.",
+  "version": "0.1.0",
+  "author": {
+    "name": "yaodongen",
+    "url": "https://github.com/yaodongen"
+  },
+  "homepage": "https://github.com/yaodongen/dev-crew",
+  "repository": "https://github.com/yaodongen/dev-crew",
+  "license": "MIT",
+  "keywords": ["workflow", "subagents", "code-review", "design-review", "development"],
+  "skills": ["./"]
+}

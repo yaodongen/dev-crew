@@ -1,87 +1,138 @@
 # dev-crew
 
-一个给 AI 编程助手用的开发流程 skill：让一个 **manager** 带着几个**程序员 subagent**，按固定流程完成一个正式的开发需求。
+**English** | [简体中文](./README.zh-CN.md)
 
-适合需要设计和评审的功能开发、重构、较复杂的 bug 修复。一两行的小改动不需要它。
+dev-crew turns one coding-agent session into a manager that runs a real development task through a gated workflow, delegating the work to programmer subagents and the reviews to separate, fresh ones.
 
-## 它解决什么问题
+**Clarify → Design → Design review → Your approval → Implement → Code review → Test → Change summary → Deploy to dev**
 
-- **一个 agent 想不全面**：方案和代码都由另一个全新上下文的 agent 独立 review。
-- **agent 会跳步**：manager 只管流程、不写代码，每一步都有关卡，过了关卡才能进入下一步，并记录在文件里。
-- **agent 会做非预期的改动**：实现完成后，manager 对照方案检查实际的 git diff，把"方案外的改动"单独列出来给你看。
-- **你不想盯全程**：你主要在几个点介入：开始时确认在哪里改代码、回答需求问题、审批方案、看变更总结、确认部署并看演示。review 中出现 manager 不能自行决定的分歧时也会来问你。
+It is a plain [Agent Skill](https://agentskills.io): a `SKILL.md` and two reference files, no code and no dependencies.
 
-## 流程
+> Status: early version. Built for Claude Code; it should work in any agent that supports skills and subagents.
+
+## Why
+
+Coding agents fail on larger tasks in predictable ways. dev-crew is built around four of them:
+
+| Problem | What dev-crew does |
+|---|---|
+| One agent misses things in its own work | Design and code are each reviewed by a fresh subagent that never saw the author's reasoning |
+| Agents skip steps ("looks fine, moving on") | The manager writes no code and only runs the process; each step has a gate that must be met and logged before the next begins |
+| Agents make changes nobody asked for | After implementation, the manager checks the real `git diff` against the approved design and lists every out-of-scope change for you to keep or revert |
+| "Done" and "tests pass" are just claims | Tests need real command output on file, and the manager reruns the key commands itself |
+
+## Install
+
+Pick one; installing it two ways gives you the skill twice.
+
+**Claude Code plugin:**
 
 ```
-1 需求澄清    程序员 A 提问 → manager 能答的答（须有出处），不能答的问你     ← 你
-2 方案设计    程序员 A 写 design.md
-3 方案 review 全新的程序员 B 审方案 → manager 裁决 → A 修改 → 新的 B 再审（最多 3 轮）
-4 用户审批    manager 重新组织方案讲给你 → 等你批准                       ← 你
-5 实现        程序员 A 按方案实现
-6 代码 review 全新的程序员 B 对照方案审 diff（最多 3 轮）
-7 测试联调    程序员 A 测试并贴出真实输出，manager 重跑关键命令核对
-8 变更总结    manager 基于 git diff 列出方案内 / 方案外的改动               ← 你
-9 部署演示    manager 部署到 dev，按验收标准逐条演示                      ← 你
+/plugin marketplace add yaodongen/dev-crew
+/plugin install dev-crew@dev-crew
 ```
 
-**在哪里改代码**：开始前 manager 会按项目已有的分支命名习惯拟一个分支名，然后：
+**Claude Code and other agents, via the [skills CLI](https://github.com/vercel-labs/skills):**
 
-- 当前目录有未提交的改动时，直接为这个需求建一个独立的 git worktree 并告诉你名字和位置，避免你的改动和需求的改动混在一起。
-- 当前目录干净时，问你一次：建 worktree、在当前目录新建分支、还是就在当前分支上做。
+```bash
+npx skills add yaodongen/dev-crew --global --agent claude-code   # Claude Code
+npx skills add yaodongen/dev-crew --global --agent codex         # Codex
+npx skills add yaodongen/dev-crew --global --agent '*'           # every agent it detects
+```
 
-过程文件保存在主仓库的 `.dev-crew/<需求简称>/` 下，会话中断后可以从 `status.md` 记录的那一步继续。流程结束后分支和 worktree（如果建了）会保留，提交、合并、清理由你决定。
+Leave off `--global` to install only in the current project.
 
-## 安装
-
-**Claude Code**（个人级，所有项目可用）：
+**Manually (Claude Code):**
 
 ```bash
 git clone https://github.com/yaodongen/dev-crew ~/.claude/skills/dev-crew
 ```
 
-只在某个项目里用，就克隆到该项目的 `.claude/skills/dev-crew`。
+## Use
 
-**其他支持 Agent Skills 的工具**（Codex、Cursor 等）：
-
-```bash
-npx skills add yaodongen/dev-crew
-```
-
-需要工具支持 subagent。没有 subagent 时 skill 会提示你并降级执行，但独立 review 的效果会打折。
-
-## 使用
-
-在项目里对 agent 说：
+Tell your agent, in any language:
 
 ```
-用 dev-crew 做这个需求：<需求描述>
+Use dev-crew for this task: add CSV export to the orders page
 ```
 
-继续一个中断的需求：
-
 ```
-继续 dev-crew 的 <需求简称>
+用 dev-crew 做这个需求：订单页增加导出 CSV
 ```
 
-**多个需求同时进行**：每个需求开一个会话，并各用一个 worktree，互不干扰。
+Resume an interrupted task:
 
-**部署**：第一次用到部署时会问你 dev 环境怎么部署，并记到 `.dev-crew/config.md`，之后不再问。每次部署前仍会先向你确认。
+```
+Continue the dev-crew task export-csv
+```
 
-## 文件结构
+The manager replies in your language and writes the process files in it too.
+
+dev-crew is for features, refactors, and non-trivial bug fixes that deserve a design and a review. For a one-line change, just ask the agent directly.
+
+## The workflow
+
+```mermaid
+flowchart LR
+    S1[1 Clarify] --> S2[2 Design] --> S3[3 Design review]
+    S3 --> S4{{4 Your approval}}
+    S4 --> S5[5 Implement] --> S6[6 Code review] --> S7[7 Test]
+    S7 --> S8{{8 Change summary}} --> S9{{9 Deploy to dev + demo}}
+```
+
+| # | Step | Who | Gate to pass |
+|---|---|---|---|
+| 1 | Clarify requirements | Programmer A asks; the manager answers only with a source, otherwise asks **you** | No open questions; verifiable acceptance criteria |
+| 2 | Design | Programmer A | `design.md` is complete |
+| 3 | Design review | Fresh programmer B, up to 3 rounds; the manager rules on each comment | No unresolved blocking comment |
+| 4 | Approval | The manager presents the design to **you** | You explicitly approve. No code is touched before this |
+| 5 | Implement | Programmer A, strictly to the design | Implementation reported complete |
+| 6 | Code review | Fresh programmer B reviews the diff against the design, up to 3 rounds | No unresolved blocking comment |
+| 7 | Test | Programmer A tests; the manager reruns key commands | Every acceptance criterion backed by real output |
+| 8 | Change summary | The manager reads the real diff and reports to **you** | Every out-of-scope change has your decision |
+| 9 | Deploy and demo | The manager deploys to dev after **you** confirm, then demos each criterion | You confirm the demo passed |
+
+The gates are mandatory. If a later step finds a problem, the workflow goes back to the right earlier step and the steps after it are done again.
+
+### Where the code is changed
+
+Before starting, the manager proposes a branch name that follows your project's existing naming convention, then:
+
+- If the current directory has uncommitted changes, it creates a separate git worktree for the task and tells you the name and location, so your changes and the task's changes never mix.
+- If the directory is clean, it asks once: a worktree, a new branch in place, or the current branch.
+
+### Tasks across several repositories
+
+The design is still written and approved once, with an explicit contract between the repositories. Implementation then runs in parallel with one programmer per repository, and each repository's changes are reviewed by a separate fresh reviewer. Testing verifies everything together.
+
+### What it leaves behind
+
+Process files are kept under `.dev-crew/<task>/` in your repository: requirements, design, each review round with the manager's rulings, the test report, the change summary, and a `status.md` gate log. An interrupted session resumes from that log.
+
+dev-crew never commits, merges, or cleans up on its own. Those are yours to decide.
+
+## How it is built
 
 ```
 dev-crew/
-├── SKILL.md                 manager 的工作手册
+├── SKILL.md                 the manager's playbook
 └── references/
-    ├── briefs.md            给程序员 subagent 的任务说明模板
-    └── templates.md         过程文件和汇报的模板
+    ├── briefs.md            task briefs the manager gives to programmer subagents
+    └── templates.md         templates for process files and reports
 ```
 
-## 设计依据
+The design rests on three ideas about how language models behave:
 
-1. **独立上下文才有独立判断**：reviewer 只看产物，不看作者的推理过程，否则只会顺着作者的思路确认一遍。
-2. **manager 不干活，流程才不会丢**：主会话不通读代码、不写代码，上下文保持简短，流程规则不会被实现细节稀释。
-3. **文件是唯一的事实来源**：每一步的结论全部落盘，程序员可以随时换新的 subagent，流程可恢复、可追溯。
-4. **review 要能收敛**：意见分"阻塞 / 建议"，只有阻塞项必须处理，最多 3 轮，剩余分歧交给人。
-5. **结论要有证据**：测试看真实输出，变更看真实 diff，不采信"已完成""已通过"的口头汇报。
+- **Independent judgment needs independent context.** A reviewer that has seen the author's reasoning tends to confirm it. Reviewers here get only the result.
+- **The manager stays out of the work so the process survives.** A session full of implementation detail loses track of process rules. The manager's context stays small.
+- **Files are the single source of truth.** Every conclusion is written down, so programmers can be swapped for fresh subagents at any step and nothing depends on one long conversation.
+
+## Requirements and limits
+
+- A git repository. The change summary depends on diffs.
+- An agent with subagent support. Without it, the skill tells you and falls back to a single agent, which loses the independent review.
+- It uses more tokens and time than asking an agent to "just do it". That is the trade for the reviews and the audit.
+
+## License
+
+[MIT](./LICENSE)
