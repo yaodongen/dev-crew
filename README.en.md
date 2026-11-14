@@ -151,7 +151,7 @@ The design rests on four ideas, one about people and three about language models
 - An agent with subagent support. Without it, the skill tells you and falls back to a single agent, which loses the independent review.
 - It uses more tokens and time than asking an agent to "just do it". That is the trade for fewer interruptions, the reviews, and the audit.
 
-Finally, I hope you enjoy this skill, enjoy thinking, and enjoy staying in flow. Thank you.
+Finally, I hope you enjoy this skill and the flow that comes from thinking without interruption. Thank you.
 
 ## License
 

@@ -152,7 +152,7 @@ dev-crew/
 - 需要 agent 支持 subagent。不支持时 skill 会告诉你并退化为单 agent 执行，这样就没有独立 review 了。
 - 它比直接让 agent"做一下"更费 token 和时间，换来的是更少的打断、review 和变更审计。
 
-最后，希望大家能喜欢这个 skill，能享受思考，享受心流的过程，谢谢。
+最后，希望大家能喜欢这个 skill，能享受持续思考带来心流的过程，谢谢。
 
 ## License
 
