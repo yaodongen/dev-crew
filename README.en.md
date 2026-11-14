@@ -1,28 +1,12 @@
-# dev-crew
+# dev-crew SKILL
 
 [简体中文](./README.md) | **English**
 
-dev-crew turns one coding-agent session into a manager that runs a real development task through a gated workflow, delegating the work to programmer subagents and the reviews to separate, fresh ones.
+Background and the thinking behind this skill (in Chinese): [Why AI made programming more tiring, and what I did about it](./为什么AI让编程更累了？我的思考和解决办法.md)
 
-**Restate → Clarify → Design → Design review → Your approval → Implement → Code review → Test → Change summary → Run it for your acceptance**
+**What is dev-crew?**
 
-The thinking you have to do is packed into the first five steps. Major questions are asked before any code changes; minor ones are decided for you, written down, and shown to you together at the end. After you approve the design, you are rarely interrupted again until acceptance.
-
-It is a plain [Agent Skill](https://agentskills.io): a `SKILL.md` and two reference files, no code and no dependencies.
-
-Background and the thinking behind it (in Chinese): [Why AI made programming more tiring, and what I did about it](<./为什么AI让编程更累了？我的思考和解决办法.md>)
-
-## Why
-
-Coding agents fail on larger tasks in predictable ways. dev-crew is built around five of them:
-
-| Problem | What dev-crew does |
-|---|---|
-| Agents stop mid-task to ask questions; with several tasks running, you are interrupted and switching context all day | Major questions are asked once, before any code changes. Minor ones (easy to change later) are decided by the crew, logged in `decisions.md`, and confirmed with you at approval and acceptance |
-| One agent misses things in its own work | Design and code are each reviewed by a fresh subagent that never saw the author's reasoning |
-| Agents skip steps ("looks fine, moving on") | The manager writes no code and only runs the process; each step has a gate that must be met and logged before the next begins |
-| Agents make changes nobody asked for | After implementation, the manager checks the real `git diff` against the approved design and lists every out-of-scope change for you to keep or revert |
-| "Done" and "tests pass" are just claims | Tests need real command output on file, and the manager reruns the key commands itself |
+The dev-crew skill completes a task with one virtual manager and several virtual programmers working together. It greatly reduces your mental load and raises the quality of the work.
 
 ## Install
 
@@ -50,6 +34,26 @@ Leave off `--global` to install only in the current project.
 ```bash
 git clone https://github.com/yaodongen/dev-crew ~/.claude/skills/dev-crew
 ```
+
+## What it does
+
+**Restate → Clarify → Design → Design review → Your approval → Implement → Code review → Test → Change summary → Run it for your acceptance**
+
+The thinking you have to do is packed into the first five steps. Major questions are asked before any code changes; minor ones are decided for you, written down, and shown to you together at the end. After you approve the design, you are rarely interrupted again until acceptance.
+
+It is a plain [Agent Skill](https://agentskills.io): a `SKILL.md` and two reference files, no code and no dependencies.
+
+## Why
+
+Coding agents fail on larger tasks in predictable ways. dev-crew is built around five of them:
+
+| Problem | What dev-crew does |
+|---|---|
+| Agents stop mid-task to ask questions; with several tasks running, you are interrupted and switching context all day | Major questions are asked once, before any code changes. Minor ones (easy to change later) are decided by the crew, logged in `decisions.md`, and confirmed with you at approval and acceptance |
+| One agent misses things in its own work | Design and code are each reviewed by a fresh subagent that never saw the author's reasoning |
+| Agents skip steps ("looks fine, moving on") | The manager writes no code and only runs the process; each step has a gate that must be met and logged before the next begins |
+| Agents make changes nobody asked for | After implementation, the manager checks the real `git diff` against the approved design and lists every out-of-scope change for you to keep or revert |
+| "Done" and "tests pass" are just claims | Tests need real command output on file, and the manager reruns the key commands itself |
 
 ## Use
 
@@ -146,6 +150,8 @@ The design rests on four ideas, one about people and three about language models
 - A git repository. The change summary depends on diffs.
 - An agent with subagent support. Without it, the skill tells you and falls back to a single agent, which loses the independent review.
 - It uses more tokens and time than asking an agent to "just do it". That is the trade for fewer interruptions, the reviews, and the audit.
+
+Finally, I hope you enjoy this skill, enjoy thinking, and enjoy staying in flow. Thank you.
 
 ## License
 
