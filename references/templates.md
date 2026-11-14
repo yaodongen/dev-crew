@@ -1,141 +1,215 @@
-# File templates
+# 文件模板
 
-`design.md` and `test-report.md` are written by the programmers; their formats are in steps 2 and 7 of `briefs.md`.
+`design.md` 和 `test-report.md` 由程序员写，格式在 `briefs.md` 的第 3 步和第 8 步里。
 
-The templates are in English. Write the actual files in the user's language, including headings.
+模板是中文的。用户使用其他语言时，实际的文件用用户的语言写，包括标题。
 
 ## status.md
 
 ```markdown
-# <task-slug>
+# <需求简称>
 
-- Current step: step <N> <step name> (write "done" when everything is finished)
-- Workspace: <absolute path> (worktree / current repository directory; "undecided" until chosen)
-- Branch: <branch> (new, based on <base branch> / existing current branch)
-- Baseline commit: <HEAD inside the workspace when it was decided>
+- 当前步骤：第 <N> 步 <步骤名>（全部完成后写"已完成"）
+- 工作区：<绝对路径>（worktree / 当前仓库目录；确定之前写"待定"）
+- 分支：<分支名>（新建，基于 <基准分支> / 沿用当前分支）
+- 基线 commit：<确定工作区时工作区里的 HEAD>
 
-(When the task spans several repositories, replace the three lines above with a table:
-| Repository | Workspace | Branch | Baseline commit |)
+（需求涉及多个仓库时，把上面三行换成一张表：
+| 仓库 | 工作区 | 分支 | 基线 commit |）
 
-## Gate log
-Append only; never edit existing rows. Status values: passed / skipped at user's request / went back.
+## 关卡记录
+只追加，不修改已有的行。状态取值：通过 / 用户要求跳过 / 回退。
 
-| Time | Step | Status | Notes |
+| 时间 | 步骤 | 状态 | 备注 |
 |---|---|---|---|
-| 2026-01-01 10:00 | 1 Clarify requirements | passed | asked the user 2 questions |
-| 2026-01-01 10:40 | 2 Design | passed | |
-| 2026-01-01 11:30 | 3 Design review | passed | 2 rounds |
-| 2026-01-01 14:00 | 4 User approval | passed | user said: "OK, go with this" |
-| 2026-01-01 15:10 | 5 Implement | passed | changed files: a.ts, b.ts |
-| 2026-01-01 16:00 | 7 Test | went back | criterion 2 failed; back to fix and code review |
+| 2026-01-01 09:50 | 1 需求复述 | 通过 | 用户更正了 1 处后确认；工作区已建 |
+| 2026-01-01 10:00 | 2 需求澄清 | 通过 | 问了用户 1 个大问题，代为决定 3 个小问题 |
+| 2026-01-01 10:40 | 3 方案设计 | 通过 | |
+| 2026-01-01 11:30 | 4 方案 review | 通过 | 共 1 轮，采纳 2 条 |
+| 2026-01-01 14:00 | 5 用户审批 | 通过 | 用户原话："可以，按这个做" |
+| 2026-01-01 15:10 | 6 实现 | 通过 | 改动文件：a.ts、b.ts |
+| 2026-01-01 16:00 | 8 测试 | 回退 | 第 2 条验收标准失败，回到修复和代码 review |
 
-## Waiting on the user
-- <what you are currently waiting for the user to answer, or "nothing">
+## 待用户决定
+- <当前在等用户回答的事项，没有则写"无">
 
-## Acceptance criteria deferred to the demo
-- <criteria that cannot be verified locally and the user agreed to defer, or "none">
+## 留到用户验收时验证的验收标准
+- <本地无法验证、留到第 10 步的条目，没有则写"无">
 ```
 
 ## requirements.md
 
-When you create the file, write only "Original request". Programmer A fills in the other three sections; you fill in the "Answer" and "Source" columns.
+你建文件时只写"原始需求"。第 1 步发出复述时写"需求复述"并标注"待用户确认"，用户确认后去掉标注。其余三节由程序员 A 填写；"回答"和"出处"两列由你填。问答记录里只放大问题，小问题记在 `decisions.md`。
 
 ```markdown
-# Requirements
+# 需求
 
-## Original request
-<the user's words, verbatim>
+## 原始需求
+<用户的原话，不改写>
 
-## Understanding
+## 需求复述
+<你用自己的话写的复述，经用户确认：要做什么、做完后的效果、范围边界>
 
-## Acceptance criteria
-1. <do this → observe that>
+## 需求理解
 
-## Q&A log
-| # | Question | Answer | Source |
+## 验收标准
+1. <做某操作 → 看到某结果>
+
+## 问答记录
+| # | 问题 | 回答 | 出处 |
 |---|---|---|---|
-| 1 | … | … | user's words / code path:line / docs |
+| 1 | … | … | 用户原话 / 代码 path:line / 文档 |
 ```
 
-## The "Rulings" section of review files
+## decisions.md
 
-In `design-review-N.md` and `code-review-N.md`, programmer B writes "Comments" and "Verdict". You append this at the end:
+代用户做的决定。只记小问题：选错了事后很容易改回来的。程序员和你都往里追加，只追加行；"用户确认"列由你维护。
 
 ```markdown
-## Rulings (manager)
-| # | Level | Accepted? | Reason |
-|---|---|---|---|
-| 1 | blocking | accepted | … |
-| 2 | suggestion | rejected | … |
-| 3 | blocking | rejected (user's decision) | … |
+# 代你做的决定
+
+这些问题没有打断你，由开发小组先做了选择。它们都很容易改回来；有异议告诉 manager 即可。
+
+| # | 步骤 | 问题 | 采用的决定 | 理由 | 怎么改回来 | 用户确认 |
+|---|---|---|---|---|---|---|
+| 1 | 2 需求澄清 | 导出的文件名用什么格式 | `orders-YYYYMMDD.csv` | 与现有报表导出一致 | 改 `export/naming.ts` 里的一个常量 | 已确认 |
+| 2 | 6 实现 | 调用失败时重试几次 | 3 次，指数退避 | 与项目里其他调用一致 | 改配置项 `retry.maxAttempts` | 待确认 |
+| 3 | 6 实现 | … | … | … | … | 用户改为：… |
 ```
 
-## Presenting the design (step 4, to the user)
+"用户确认"的取值：待确认 / 已确认 / 用户改为：<内容>。第 5 步批准后，把已展示的行标为已确认；第 10 步结束时处理剩下的。
 
-This is written for someone who was not part of the process. Lead with the conclusion, use full sentences, and do not use labels that were coined along the way.
+## review 文件的"裁决"部分
+
+`design-review-N.md` 和 `code-review-N.md` 里，"意见"和"结论"由程序员 B 写。你在文件末尾追加：
 
 ```markdown
-## Design for <task name>
+## 裁决（manager）
+| # | 级别 | 采纳？ | 理由 |
+|---|---|---|---|
+| 1 | 阻塞 | 采纳 | … |
+| 2 | 建议 | 不采纳 | … |
+| 3 | 阻塞 | 不采纳（小问题，已记入 decisions.md #4） | … |
+| 4 | 阻塞 | 待用户决定（第 5 步） | … |
+```
 
-**Problem being solved**: <one or two sentences>
+## 方案呈现（第 5 步，讲给用户）
 
-**Approach**: <the core idea in a paragraph; add a short step list if the flow is complex>
+这是写给一个没参与过程的人看的，他可能刚从别的需求切换过来。先讲结论，用完整的句子，不要用过程中临时起的代号。整体要短，让他几分钟内能看完并做决定。
 
-**Scope of changes**
-| File | What changes |
+```markdown
+## <需求名> 方案（第 5 步，等你审批）
+
+**要解决的问题**：<一两句>
+
+**做法**：<核心思路，一段话；流程复杂时加一个简短的步骤列表>
+
+**架构图**（改动涉及多个模块时才有）
+<design.md 里的纯文本架构图，标出新增和修改的模块>
+
+**改动范围**
+| 模块 | 改什么 |
 |---|---|
 | … | … |
 
-**What will not change**: <parts the user might worry about that are left untouched>
+**不会改动的**：<用户可能担心被波及、但实际不动的部分>
 
-**Trade-offs**: <what was chosen, what was given up, and why>
+**取舍**：<选了什么、放弃了什么、为什么>
 
-**Risks**: <what could go wrong and how it is handled>
+**风险**：<可能出问题的地方和应对>
 
-**How it will be verified**: <how each acceptance criterion is tested>
+**怎么验证**：<验收标准如何测试，概括即可>
 
-**Review**: <N> review rounds. Adopted: <…>. Not adopted: <…, with reasons>.
+**review 情况**：经过 <N> 轮 review。采纳了：<…>。没采纳：<…，以及理由>。
 
-**Decisions needed from you**: <open questions, or "none">
+**已代你做的决定**（都很容易改回来，默认生效，有异议的指出来即可）
+| # | 问题 | 采用的决定 | 怎么改回来 |
+|---|---|---|---|
+| … | … | … | … |
 
-Please confirm whether you approve implementing this design.
+**需要你决定的**（没有就写"无"）
+1. <问题>。选项：A … / B …。建议：<…>，因为 <…>。
+
+请确认是否批准按此方案实现。批准之后，除非遇到影响很大的问题，到验收之前不会再打断你。
 ```
 
-## summary.md (step 8)
+架构图示例：
+
+```
+  [订单页]  ──导出请求──▶  [导出接口 *新增*]  ──查询──▶  [订单服务 *修改*]
+                                 │
+                                 └──写文件──▶  [文件存储]
+```
+
+## summary.md（第 9 步）
 
 ```markdown
-# Change summary
+# 变更总结
 
-Baseline: <commit>   Changes: <N> files (<M> new)
+基线：<commit>　改动：<N> 个文件（其中 <M> 个新文件）
 
-## Changes within the design
-| File | What changed |
+## 方案内的改动
+| 文件 | 改了什么 |
 |---|---|
 
-## Changes outside the design
-| File | What changed | Why | Decision |
+## 方案外的改动
+| 文件 | 改了什么 | 原因 | 处理 |
 |---|---|---|---|
-| … | … | … | waiting on user / keep / reverted |
+| … | … | … | 待用户决定 / 保留 / 已还原 |
 
-(write "none" if there are none)
+（没有就写"无"）
 
-## In the design but not done
-<write "none" if there are none>
+## 方案里有但没做的
+<没有就写"无">
 
-## Test results
-<the result for each acceptance criterion; which commands you reran and whether they matched the report; criteria deferred to the demo>
+## 代你做的决定
+decisions.md 里你还没确认过的。没提出异议的视为确认。
+
+| # | 问题 | 采用的决定 | 怎么改回来 | 结果 |
+|---|---|---|---|---|
+| … | … | … | … | 待确认 / 已确认 / 已按用户意见改为 … |
+
+## 测试结果
+<每条验收标准的结论；你重跑了哪些命令、结果是否与报告一致；留到用户验收时验证的条目>
 ```
+
+## 交付验收的消息（第 9、10 步合并发送）
+
+```markdown
+## <需求名> 已完成，等你验收
+
+**改了什么**：<一两句>。共 <N> 个文件，详见 <summary.md 的路径>。
+
+**方案外的改动**（没有就写"无"；没提到的视为保留）
+| 文件 | 改了什么 | 原因 |
+|---|---|---|
+
+**代你做的决定**（没提到的视为确认）
+| # | 问题 | 采用的决定 | 怎么改回来 |
+|---|---|---|---|
+
+**怎么验收**
+程序已启动：<访问地址或使用方式>
+1. <操作步骤> → 预期：<结果>
+2. …
+
+请逐条告诉我通过还是有问题。
+```
+
+远程 dev 环境时分两条发：第一条是"改了什么"到"代你做的决定"，加上要执行的部署命令和目标环境，请用户确认；部署完成后再发"怎么验收"。
 
 ## .dev-crew/config.md
 
-Project-level configuration shared by all tasks, kept under the main repository directory.
+项目级配置，所有需求共用，放在主仓库目录下。
 
 ```markdown
-# dev-crew project config
+# dev-crew 项目配置
 
-## Deploying to dev
-- Command:
-- Target environment / URL:
-- Requires a commit or push first:
-- How to reach or verify it after deploying:
+## 启动与验收（第 10 步）
+- 方式：本地启动 / 远程 dev 环境
+- 本地启动命令：
+- 本地访问地址：
+- dev 部署命令：
+- dev 目标环境 / 地址：
+- 部署是否需要先 commit 或 push：
 ```

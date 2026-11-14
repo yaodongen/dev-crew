@@ -1,135 +1,151 @@
 # dev-crew
 
-**English** | [简体中文](./README.zh-CN.md)
+**简体中文** | [English](./README.en.md)
 
-dev-crew turns one coding-agent session into a manager that runs a real development task through a gated workflow, delegating the work to programmer subagents and the reviews to separate, fresh ones.
+dev-crew 把一个编程 agent 会话变成一位 manager：它按带关卡的流程推进一个正式的开发需求，把具体工作交给程序员 subagent，把 review 交给另外的、全新的 subagent。
 
-**Clarify → Design → Design review → Your approval → Implement → Code review → Test → Change summary → Deploy to dev**
+**需求复述 → 需求澄清 → 方案设计 → 方案 review → 你审批 → 实现 → 代码 review → 测试 → 变更总结 → 启动并由你验收**
 
-It is a plain [Agent Skill](https://agentskills.io): a `SKILL.md` and two reference files, no code and no dependencies.
+需要你思考的事集中在前 5 步一次做完：大问题在动代码之前问清楚，小问题由小组先替你决定并记录下来，最后统一给你过目。批准方案之后，到验收之前基本不会再打断你。
 
-## Why
+它是一个纯粹的 [Agent Skill](https://agentskills.io)：一个 `SKILL.md` 加两个参考文件，没有代码，没有依赖。
 
-Coding agents fail on larger tasks in predictable ways. dev-crew is built around four of them:
+写这个 skill 的背景和思考：[为什么 AI 让编程更累了？我的思考和解决办法](<./为什么AI让编程更累了？我的思考和解决办法.md>)
 
-| Problem | What dev-crew does |
+## 为什么需要它
+
+编程 agent 在较大的需求上出问题的方式很固定，dev-crew 针对其中五种：
+
+| 问题 | dev-crew 的做法 |
 |---|---|
-| One agent misses things in its own work | Design and code are each reviewed by a fresh subagent that never saw the author's reasoning |
-| Agents skip steps ("looks fine, moving on") | The manager writes no code and only runs the process; each step has a gate that must be met and logged before the next begins |
-| Agents make changes nobody asked for | After implementation, the manager checks the real `git diff` against the approved design and lists every out-of-scope change for you to keep or revert |
-| "Done" and "tests pass" are just claims | Tests need real command output on file, and the manager reruns the key commands itself |
+| agent 写到一半随时停下来问问题；同时开着几个需求时，你不停地被打断、切换上下文 | 大问题前置到动代码之前一次问完；小问题（事后很容易改回来的）由小组先决定并记入 `decisions.md`，在审批和验收时集中给你确认 |
+| 一个 agent 看不出自己工作里的问题 | 方案和代码各由一个全新的 subagent review，它没见过作者的推理过程 |
+| agent 会跳步（"看起来没问题，继续"） | manager 不写代码，只管流程；每一步都有关卡，满足并记录后才能进入下一步 |
+| agent 会做没人要求的改动 | 实现完成后，manager 对照已批准的方案检查真实的 `git diff`，把方案外的改动逐条列给你，由你决定保留还是还原 |
+| "已完成""测试通过"只是口头说法 | 测试必须有真实的命令输出存档，manager 还会自己重跑关键命令 |
 
-## Install
+## 安装
 
-Pick one; installing it two ways gives you the skill twice.
+任选一种；用两种方式都装会出现两份同样的 skill。
 
-**Claude Code plugin:**
+**Claude Code plugin：**
 
 ```
 /plugin marketplace add yaodongen/dev-crew
 /plugin install dev-crew@dev-crew
 ```
 
-**Claude Code and other agents, via the [skills CLI](https://github.com/vercel-labs/skills):**
+**Claude Code 和其他 agent，通过 [skills CLI](https://github.com/vercel-labs/skills)：**
 
 ```bash
 npx skills add yaodongen/dev-crew --global --agent claude-code   # Claude Code
 npx skills add yaodongen/dev-crew --global --agent codex         # Codex
-npx skills add yaodongen/dev-crew --global --agent '*'           # every agent it detects
+npx skills add yaodongen/dev-crew --global --agent '*'           # 所有检测到的 agent
 ```
 
-Leave off `--global` to install only in the current project.
+去掉 `--global` 就只安装到当前项目。
 
-**Manually (Claude Code):**
+**手动安装（Claude Code）：**
 
 ```bash
 git clone https://github.com/yaodongen/dev-crew ~/.claude/skills/dev-crew
 ```
 
-## Use
+## 使用
 
-Tell your agent, in any language:
-
-```
-Use dev-crew for this task: add CSV export to the orders page
-```
+用任何语言对 agent 说：
 
 ```
 用 dev-crew 做这个需求：订单页增加导出 CSV
 ```
 
-Resume an interrupted task:
-
 ```
-Continue the dev-crew task export-csv
+Use dev-crew for this task: add CSV export to the orders page
 ```
 
-The manager replies in your language and writes the process files in it too.
+继续一个中断的需求：
 
-dev-crew is for features, refactors, and non-trivial bug fixes that deserve a design and a review. For a one-line change, just ask the agent directly.
+```
+继续 dev-crew 的 export-csv
+```
 
-## The workflow
+manager 会用你的语言回复，过程文件也用你的语言写。
+
+dev-crew 适合需要设计和评审的功能开发、重构、较复杂的 bug 修复。一行的小改动直接让 agent 做就行。
+
+## 流程
 
 ```mermaid
 flowchart LR
-    S1[1 Clarify] --> S2[2 Design] --> S3[3 Design review]
-    S3 --> S4{{4 Your approval}}
-    S4 --> S5[5 Implement] --> S6[6 Code review] --> S7[7 Test]
-    S7 --> S8{{8 Change summary}} --> S9{{9 Deploy to dev + demo}}
+    S1{{1 需求复述}} --> S2[2 需求澄清] --> S3[3 方案设计] --> S4[4 方案 review]
+    S4 --> S5{{5 你审批}}
+    S5 --> S6[6 实现] --> S7[7 代码 review] --> S8[8 测试]
+    S8 --> S9{{9 变更总结}} --> S10{{10 启动并由你验收}}
 ```
 
-| # | Step | Who | Gate to pass |
+| # | 步骤 | 谁来做 | 关卡 |
 |---|---|---|---|
-| 1 | Clarify requirements | Programmer A asks; the manager answers only with a source, otherwise asks **you** | No open questions; verifiable acceptance criteria |
-| 2 | Design | Programmer A | `design.md` is complete |
-| 3 | Design review | Fresh programmer B, up to 3 rounds; the manager rules on each comment | No unresolved blocking comment |
-| 4 | Approval | The manager presents the design to **you** | You explicitly approve. No code is touched before this |
-| 5 | Implement | Programmer A, strictly to the design | Implementation reported complete |
-| 6 | Code review | Fresh programmer B reviews the diff against the design, up to 3 rounds | No unresolved blocking comment |
-| 7 | Test | Programmer A tests; the manager reruns key commands | Every acceptance criterion backed by real output |
-| 8 | Change summary | The manager reads the real diff and reports to **you** | Every out-of-scope change has your decision |
-| 9 | Deploy and demo | The manager deploys to dev after **you** confirm, then demos each criterion | You confirm the demo passed |
+| 1 | 需求复述 | manager 用自己的话把需求复述给**你**，同时问清在哪里改代码；等你回复时程序员 A 已在后台读代码 | 你确认它理解对了 |
+| 2 | 需求澄清 | 程序员 A 结合代码找出不清楚的地方；大问题一次问**你**，小问题代你决定并记录 | 大问题都有回答；验收标准可逐条验证 |
+| 3 | 方案设计 | 程序员 A 写一份 high level 的方案，一两页，不含实现细节 | `design.md` 完整 |
+| 4 | 方案 review | 全新的程序员 B 只挑方向性的问题，通常 1 轮，最多 2 轮；manager 逐条裁决 | 没有未处理的阻塞意见 |
+| 5 | 审批 | manager 把方案讲给**你**：改动涉及多个模块时附架构图，列出已代你做的决定和需要你决定的事 | 你明确批准。在此之前不动任何代码 |
+| 6 | 实现 | 程序员 A 按方案实现，细节自己决定并记录；可拆分时多名程序员并行 | 报告实现完成 |
+| 7 | 代码 review | 全新的程序员 B 对照方案审 diff，最多 3 轮 | 没有未处理的阻塞意见 |
+| 8 | 测试 | 程序员 A 测试；manager 重跑关键命令 | 每条验收标准都有真实输出佐证 |
+| 9 | 变更总结 | manager 读真实 diff，写出方案外的改动和代你做的决定 | 总结已发给你 |
+| 10 | 启动和验收 | manager 在本地启动程序，或经**你**确认后部署到远程 dev 环境；**你**按验收清单亲自验收，同时确认第 9 步的内容 | 你确认验收通过 |
 
-The gates are mandatory. If a later step finds a problem, the workflow goes back to the right earlier step and the steps after it are done again.
+关卡是强制的。后面的步骤发现问题时，流程回到对应的前面步骤，其后的步骤重新走一遍。
 
-### Where the code is changed
+第 1–5 步你在等着，所以做得快：产物短，只处理影响方向的事。第 6–9 步用来保证质量，会花更久，但不需要你守着。
 
-Before starting, the manager proposes a branch name that follows your project's existing naming convention, then:
+### 在哪里改代码
 
-- If the current directory has uncommitted changes, it creates a separate git worktree for the task and tells you the name and location, so your changes and the task's changes never mix.
-- If the directory is clean, it asks once: a worktree, a new branch in place, or the current branch.
+manager 按项目已有的分支命名习惯拟一个分支名，在需求复述的同一条消息里说明：
 
-### Tasks across several repositories
+- 当前目录有未提交的改动时，直接为这个需求建一个独立的 git worktree，并告诉你名字和位置，你的改动和需求的改动不会混在一起。
+- 当前目录干净时，问你：建 worktree、在当前目录新建分支、还是就在当前分支上做。
 
-The design is still written and approved once, with an explicit contract between the repositories. Implementation then runs in parallel with one programmer per repository, and each repository's changes are reviewed by a separate fresh reviewer. Testing verifies everything together.
+### 大问题和小问题
 
-### What it leaves behind
+- **小问题**：选错了事后很容易改回来，比如重试 3 次还是 5 次。不问你，小组先选一个答案，在 `decisions.md` 里记下问题、决定、理由和怎么改回来。
+- **大问题**：选错了改回来代价很大或影响面很大，比如要不要改动核心模块的设计。这类才会问你，并且尽量集中在第 5 步之前。
 
-Process files are kept under `.dev-crew/<task>/` in your repository: requirements, design, each review round with the manager's rulings, the test report, the change summary, and a `status.md` gate log. An interrupted session resumes from that log.
+代你做的决定在第 5 步和验收时各展示一次，默认生效，你有异议再改。
 
-dev-crew never commits, merges, or cleans up on its own. Those are yours to decide.
+### 并行开发
 
-## How it is built
+需求涉及多个仓库，或同一仓库里文件互不重叠的多个模块时，方案仍然只写一份、审批一次，其中明确写出各部分之间的约定。之后实现并行进行，每部分一名程序员；改动再由另一名全新的 reviewer 审查。测试时把所有改动合在一起验证。
+
+### 它留下什么
+
+过程文件保存在你仓库的 `.dev-crew/<需求>/` 下：需求、方案、代你做的决定、每一轮 review 及 manager 的裁决、测试报告、变更总结，以及记录关卡的 `status.md`。会话中断后可以从这份记录继续。
+
+dev-crew 不会自行 commit、合并或清理，这些都由你决定。
+
+## 它是怎么设计的
 
 ```
 dev-crew/
-├── SKILL.md                 the manager's playbook
+├── SKILL.md                 manager 的工作手册
 └── references/
-    ├── briefs.md            task briefs the manager gives to programmer subagents
-    └── templates.md         templates for process files and reports
+    ├── briefs.md            manager 派给程序员 subagent 的任务说明
+    └── templates.md         过程文件和汇报的模板
 ```
 
-The design rests on three ideas about how language models behave:
+设计基于四点，一点关于人，三点关于大模型：
 
-- **Independent judgment needs independent context.** A reviewer that has seen the author's reasoning tends to confirm it. Reviewers here get only the result.
-- **The manager stays out of the work so the process survives.** A session full of implementation detail loses track of process rules. The manager's context stays small.
-- **Files are the single source of truth.** Every conclusion is written down, so programmers can be swapped for fresh subagents at any step and nothing depends on one long conversation.
+- **你的专注力是最贵的资源。** 每次打断都要切换上下文，打断多了决定的质量会下降。所以问题按轻重分开：大的前置，小的后置。
+- **独立上下文才有独立判断。** 看过作者推理过程的 reviewer 倾向于认同它，所以这里的 reviewer 只拿到产物。
+- **manager 不干活，流程才不会丢。** 上下文里塞满实现细节的会话会忘记流程规则，所以 manager 的上下文保持很小。
+- **文件是唯一的事实来源。** 每个结论都落盘，程序员在任何一步都可以换成全新的 subagent，不依赖一段很长的对话。
 
-## Requirements and limits
+## 要求和限制
 
-- A git repository. The change summary depends on diffs.
-- An agent with subagent support. Without it, the skill tells you and falls back to a single agent, which loses the independent review.
-- It uses more tokens and time than asking an agent to "just do it". That is the trade for the reviews and the audit.
+- 需要 git 仓库。变更总结依赖 diff。
+- 需要 agent 支持 subagent。不支持时 skill 会告诉你并退化为单 agent 执行，这样就没有独立 review 了。
+- 它比直接让 agent"做一下"更费 token 和时间，换来的是更少的打断、review 和变更审计。
 
 ## License
 

@@ -1,231 +1,305 @@
 ---
 name: dev-crew
-description: Run a real development task with a small crew — one manager plus programmer subagents — through a gated workflow. The steps are requirement clarification, design, independent design review, user approval, implementation, independent code review, testing, a change summary checked against the real diff, and a dev deployment demo. Every step has a gate and a written record, which prevents skipped steps and unintended changes. Use this when the user says "use dev-crew", "run the full dev workflow", "design it, review it, then build it", or hands you a feature, refactor, or non-trivial bug fix that deserves a design and a review (in any language, e.g. "用 dev-crew 做这个需求", "走完整开发流程"). Do not use it for one- or two-line changes.
+description: 用"一个 manager + 多个程序员 subagent"的开发小组，按带关卡的流程完成一个正式的开发需求：需求复述确认、需求澄清、方案设计、独立方案 review、用户审批、实现、独立代码 review、测试、对照真实 diff 的变更总结、本地或 dev 环境启动后由用户验收。大问题在动代码之前一次问完，小问题由小组先代为决定并记录、事后统一确认，减少对用户的打断。每一步都有关卡和落盘的记录，防止跳步和非预期改动。当用户说"用 dev-crew"、"按完整流程做这个需求"、"走开发流程"、"先出方案再评审再实现"（或其他语言的同类说法，如 "use dev-crew"、"run the full dev workflow"），或者交给你一个需要设计和评审的功能开发、重构、较复杂的 bug 修复时使用。一两行的小改动不要用这个 skill。
 ---
 
 # dev-crew
 
-You are the **manager** of this crew. You run the process; the programmers (subagents) do the work.
+你是这个开发小组的 **manager**。你负责流程，程序员（subagent）负责干活。
 
-## Why the work is split this way
+## 为什么这样分工
 
-Understand these three points and use them to decide anything this document does not cover:
+理解这四点，遇到本文没写到的情况时按它们判断：
 
-1. **Independent judgment needs independent context.** An author who checks their own design walks the same path again and sees no problems. A reviewer has to be a fresh subagent that never saw the reasoning and looks only at the result.
-2. **The manager stays out of the work so the process survives.** Once you start reading lots of code or writing code, your context fills with implementation detail, the process rules get diluted, and steps get skipped. So you do not write code, design solutions, or read through the codebase. You dispatch, inspect results, rule on reviews, and talk to the user. Checking one specific location, running commands, and reading the diff are fine.
-3. **Files are the single source of truth.** Every step writes its conclusion to a file and the next step reads it from there. Programmers can be replaced by fresh subagents at any time, an interrupted session can resume, and the user can see progress whenever they want.
+1. **用户的专注力是最贵的资源。** 用户通常同时开着好几个需求。每被打断一次，他都要切换上下文、回忆这是哪个需求、再做决定；打断多了，决定的质量就会下降。所以需要用户思考的事集中在第 1–5 步一次做完，之后尽量不打断他。
+2. **独立上下文才有独立判断。** 让写方案的人自己检查方案，他会顺着自己的思路再走一遍，看不出问题。reviewer 必须是一个没见过推理过程的全新 subagent，只看产物本身。
+3. **manager 不干活，流程才不会丢。** 你一旦开始读大量代码、写代码，上下文里就全是实现细节，流程规则会被稀释，跳步就是这么发生的。所以你不写代码、不设计方案、不通读代码；你只派活、看产物、裁决 review 意见、和用户沟通。核对某个具体位置、运行命令、读 diff 不在此限。
+4. **文件是唯一的事实来源。** 每一步的结论都写进文件，下一步的人从文件读。这样程序员可以随时换成全新的 subagent，会话中断也能恢复，用户也能随时看到进度。
 
-## Roles
+## 什么时候打断用户
 
-| Role | Who | Does what |
+整个流程里，任何人（程序员或你）遇到拿不准的事，都先按这个标准分类：
+
+- **小问题**：选错了事后很容易改回来，通常是改一个数字、一个配置、一小段代码。例如重试 3 次还是 5 次、用退避重试还是固定间隔。
+- **大问题**：选错了改回来代价很大，或者影响面很大。例如需求的范围、要不要改动一个核心模块的设计、对外接口或数据格式、不可逆的数据变更。
+
+处理方式：
+
+- 小问题不问用户。由遇到它的人选一个合理的答案，在 `decisions.md` 里追加一行：问题、采用的决定、理由、怎么改回来。这些决定在第 5 步和第 9 步集中给用户过目，默认生效，用户有异议再改。
+- 大问题才问用户。第 1–5 步里的大问题攒在一起一次问完；第 6 步之后出现的大问题，停下来问。
+- 分不清时按大问题处理。程序员提给你的"大问题"，你判断其实是小问题的，由你决定并记录，不要转给用户。
+- 能从用户说过的话、代码或文档里找到答案的，不算问题，直接采用并注明出处。
+
+## 角色
+
+| 角色 | 是谁 | 做什么 |
 |---|---|---|
-| manager | you (the main session) | drives the process, dispatches tasks, rules on review comments, talks to the user, writes the change summary, deploys |
-| programmer A | a subagent | clarifies requirements, designs, implements, fixes, tests |
-| programmer B | a fresh subagent every time | reviews the design, reviews the code |
+| manager | 你（主会话） | 推进流程、派发任务、裁决 review 意见、与用户沟通、写变更总结、启动程序供用户验收 |
+| 程序员 A | subagent | 澄清需求、设计方案、实现、修复、测试 |
+| 程序员 B | 每次都是全新的 subagent | review 方案、review 代码 |
 
-Dispatch rules:
+派发规则：
 
-- A subagent cannot see your conversation with the user, so every brief has to be self-contained. Write it from the template for that step in `references/briefs.md`.
-- A is a role, not a long-running process. Each step may use a new subagent as A; it picks up from the files in the process directory. If your platform can continue the same subagent and its context is still short, you may reuse it.
-- B is a fresh subagent on every round. Do not put A's reasoning or your own opinion in B's brief, or its conclusion will be steered.
-- If the environment has no subagent capability, tell the user first: independent review is not possible and the result will be weaker. With their consent, carry out the steps yourself and still write every record to disk.
+- subagent 看不到你和用户的对话，所以每份任务说明都必须自包含。按 `references/briefs.md` 里对应步骤的模板写。
+- A 是一个角色，不是一个常驻进程。每一步可以派一个新的 subagent 当 A，它从过程目录的文件接续。如果平台支持继续同一个 subagent 且它的上下文还不长，就续用，省掉重新读代码的时间；第 2 步到第 3 步尤其应该续用。
+- B 每一轮都是全新的 subagent。不要把 A 的推理过程或你自己的看法写进给 B 的说明里，否则它的结论会被带偏。
+- 如果当前环境没有 subagent 能力，先告诉用户：独立 review 无法成立，效果会打折。征得同意后由你自己逐步执行，记录照常落盘。
 
-## Language
+## 语言
 
-Use the user's language for everything they will read: your messages to them, and the process files (`requirements.md`, `design.md`, review files, `test-report.md`, `summary.md`, `status.md`), including headings. The templates in this skill are in English; translate them as you use them. Tell each subagent which language to write its files and report in. Code, identifiers, and commit messages follow the project's existing conventions.
+用户会读到的一切都用用户的语言：你发给用户的消息，以及全部过程文件，包括其中的标题。本 skill 里的模板是中文的，用户使用其他语言时，使用模板时翻译过去。派活时告诉每个 subagent 用什么语言写文件和回报。代码、标识符、commit message 遵循项目已有的习惯。
 
-## Process directory and workspace
+## 过程目录和工作区
 
-Each task has two locations. These two terms are used throughout:
+每个需求有两个位置，全文用这两个词：
 
-- **Process directory**: `.dev-crew/<task-slug>/` under the main repository directory. It holds all process files for this task.
-- **Workspace**: the directory where code is changed. If a git worktree was created, it is that worktree; otherwise it is the repository directory you are in.
+- **过程目录**：主仓库目录下的 `.dev-crew/<需求简称>/`，放这个需求的全部过程文件。
+- **工作区**：改代码的目录。建了 git worktree 就是那个 worktree，否则是你当前所在的仓库目录。
 
 ```
-.dev-crew/<task-slug>/
-├── status.md            current step and gate log (you maintain it)
-├── requirements.md      requirement, acceptance criteria, Q&A log
-├── design.md            the design
-├── design-review-N.md   design review round N, plus your rulings
-├── code-review-N.md     code review round N, plus your rulings
-├── test-report.md       test commands and real output
-└── summary.md           change summary
+.dev-crew/<需求简称>/
+├── status.md            当前在第几步、关卡记录（你维护）
+├── requirements.md      需求、验收标准、问答记录
+├── decisions.md         代用户做的决定（小问题），等用户事后确认
+├── design.md            方案
+├── design-review-N.md   第 N 轮方案 review 及你的裁决
+├── code-review-N.md     第 N 轮代码 review 及你的裁决
+├── test-report.md       测试命令和真实输出
+└── summary.md           变更总结
 ```
 
-Formats for `status.md`, `requirements.md`, the review files, and `summary.md` are in `references/templates.md`. Formats for `design.md` and `test-report.md` are in the briefs for their steps in `references/briefs.md`.
+`status.md`、`requirements.md`、`decisions.md`、review 文件、`summary.md` 的格式见 `references/templates.md`；`design.md` 和 `test-report.md` 的格式写在 `references/briefs.md` 对应步骤的说明里。
 
-### Starting
+### 启动
 
-1. Confirm the current directory is inside a git repository. If it is not, this workflow cannot audit changes; tell the user and ask how to proceed.
-2. Find the main repository directory: the first entry of `git worktree list`. This way the same process files are found even when the session was opened inside a worktree.
-3. Pick a slug for the task (lowercase English with hyphens, e.g. `export-csv`) and tell the user.
-4. Check whether `<main repo>/.dev-crew/<task-slug>/` exists:
-   - It exists → read `status.md` and continue from the recorded step. Do not start over. If the recorded workspace no longer exists, ask the user what to do.
-   - It does not exist → create the process directory, immediately write `status.md` (workspace: undecided) and put the user's original request verbatim into `requirements.md`, then decide the workspace.
+1. 确认当前目录在 git 仓库里。不在的话，这个流程无法审计改动，告诉用户并问怎么处理。
+2. 找到主仓库目录：`git worktree list` 的第一项。这样即使会话开在某个 worktree 里，也能找到同一份过程文件。
+3. 为需求拟一个简称（小写英文加连字符，如 `export-csv`）。
+4. 看 `<主仓库目录>/.dev-crew/<需求简称>/` 是否存在：
+   - 存在 → 读 `status.md`，从记录的那一步继续，不要重来。记录的工作区已经不存在时，问用户怎么处理。
+   - 不存在 → 建过程目录，立刻写 `status.md`（工作区：待定）并把用户的原始需求原文写进 `requirements.md`。然后做第 1 步。
 
-### Deciding the workspace
+### 确定工作区
 
-First gather the facts:
+工作区在第 1 步里和需求复述一起确定，不单独打断用户一次。先了解情况：
 
-- **Branch naming convention**: look at existing branch names in `git branch -a` and any convention in the contributing guide or CLAUDE.md / AGENTS.md (for example `feature/xxx`, `fix/xxx`, a ticket number, a username prefix). Propose a branch name for this task that follows it. Do not invent your own scheme.
-- **Uncommitted changes in the current directory**: `git status --porcelain -- . ':!.dev-crew'`.
-- **Other unfinished tasks using the current directory**: check `.dev-crew/*/status.md`.
+- **分支命名习惯**：看 `git branch -a` 里已有的分支名，以及贡献指南、CLAUDE.md / AGENTS.md 里的约定（例如 `feature/xxx`、`fix/xxx`、带工单号、带用户名前缀），按这个习惯为本需求拟一个分支名。不要自创一套命名。
+- **当前目录是否有未提交的改动**：`git status --porcelain -- . ':!.dev-crew'`。
+- **是否有别的未完成需求正在用当前目录**：看 `.dev-crew/*/status.md`。
 
-Then there are two cases.
+然后分两种情况。
 
-**The current directory has uncommitted changes → create a worktree directly, without asking whether to.** If the task were done on top of existing changes, the later diff could not tell which changes belong to this task, and the change summary would be meaningless. Tell the user: because the current directory has uncommitted changes, a separate worktree was created for this task, with this branch name, at this path, based on this branch, and their existing changes were left untouched in the original directory. Adjust the name or location if they object.
+**当前目录有未提交的改动 → 直接建 worktree，不用问要不要建。** 在已有改动的目录里做，之后的 diff 分不清哪些是本需求改的，变更总结就失去意义了。在第 1 步的消息里告诉用户：因为当前目录有未提交的改动，会为这个需求建独立的 worktree，分支名是什么、路径在哪、基于哪个分支，原有的改动留在原目录不动。用户对名字或位置有意见再调整。
 
-**The current directory is clean → ask the user once**, offering three options and your recommendation:
+**当前目录是干净的 → 在第 1 步的消息里问用户**，给出三个选项和你的建议：
 
-- Create a worktree with a new branch (give the proposed branch name, base branch, and path). It isolates the task from the current directory and lets it run alongside other tasks. Recommend this when another unfinished task is using the current directory.
-- No worktree; create a new branch in the current directory (give the proposed name and base branch).
-- No worktree; work on the current branch.
+- 建 worktree，新建分支（附拟的分支名、基准分支、路径）。好处是与当前目录隔离，可以和其他需求并行。有别的未完成需求正在用当前目录时，建议选这个。
+- 不建 worktree，在当前目录新建分支（附拟的分支名和基准分支）。
+- 不建 worktree，就在当前分支上做。
 
-A worktree always needs a new branch (git does not allow one branch to be checked out twice). The default path is next to the main repository directory, named `<repo-dir-name>-<task-slug>`; create it with an absolute path. The user may choose another location.
+worktree 必须用新分支（git 不允许同一分支被检出两次）。路径默认在主仓库目录旁边，命名为 `<仓库目录名>-<需求简称>`，用绝对路径创建；用户可以指定别的位置。
 
 ```bash
-# create a worktree
-git worktree add -b <branch> <absolute worktree path> <base branch>
-# no worktree, new branch
-git switch -c <branch> <base branch>
+# 建 worktree
+git worktree add -b <分支名> <worktree 的绝对路径> <基准分支>
+# 不建 worktree、新建分支
+git switch -c <分支名> <基准分支>
 ```
 
-Once decided, record the workspace's absolute path, the branch name, and the baseline commit in `status.md`. The baseline is HEAD inside the workspace: `git -C <workspace> rev-parse HEAD`.
+用户确认复述之后再执行创建。确定后，把工作区的绝对路径、分支名、基线 commit 记进 `status.md`。基线取工作区里的 HEAD：`git -C <工作区> rev-parse HEAD`。
 
-From here on, run all git and test commands inside the workspace (`git -C <workspace> …` or change into it). When the workspace is the main repository directory, the process directory lives inside it; exclude it when checking status and diffs with `-- . ':!.dev-crew'`.
+之后所有 git 和测试命令都在工作区里执行（`git -C <工作区> …` 或先进入该目录）。工作区就是主仓库目录时，过程目录也在里面，查看状态和 diff 时用 `-- . ':!.dev-crew'` 把它排除。
 
-### Records
+### 记录
 
-- Each time a gate is passed, immediately **append** a row to the gate log in `status.md`. Before entering the next step, confirm the previous step's output file exists and is complete.
-- For steps without their own output file, put the conclusion in the notes column of `status.md`: step 4 records the user's approval in their own words, step 5 records the list of changed files A reported, step 9 records the demo outcome.
-- One session handles one task (a task may span several repositories; see below). If the user wants to work on another task at the same time, ask them to open another session.
-- Commit only when the user says to. Whether process files go into git is the user's decision. When the workflow ends, keep the branch and the worktree (if one was created); do not clean up automatically.
+- 每过一个关卡，立刻在 `status.md` 的关卡记录里**追加**一行。进入下一步之前，先确认上一步的产物文件存在且完整。
+- 没有独立产物文件的步骤，把结论记在 `status.md` 的备注列里：第 5 步记用户批准的原话，第 6 步记 A 回报的改动文件清单，第 10 步记用户的验收结论。
+- 一个会话只做一个需求（一个需求可以涉及多个仓库，见下文）。用户要同时做别的需求，请他另开一个会话。
+- 只有用户说提交时才 commit。过程文件要不要进 git 由用户决定。流程结束后保留分支和 worktree（如果建了），不自动清理。
 
-## General rules
+## 通用规则
 
-**Order.** There are 9 steps. Take them in order; do not skip or merge them, and do not enter a step until the previous gate is met. If the user asks to skip a step, do so and record "skipped at user's request" in `status.md`.
+**顺序。** 从第 1 步到第 10 步，按顺序走，不能跳过，上一步的关卡不满足不进入下一步。本文明确写了可以同时进行或合并发送的地方除外。用户要求跳过某一步时照做，并在 `status.md` 记"用户要求跳过"。
 
-**Review loop** (shared by steps 3 and 6):
+**节奏。** 第 1–5 步用户在等着，要快：产物写短，只处理会影响方向的事，不在细节上来回。第 6–9 步用户不在等，是用来保证质量的，该 review 几轮就几轮，该重跑就重跑，不要为了快而省略。
 
-1. Dispatch B to write the review file. Comments have two levels, "blocking" and "suggestion"; the definitions are in B's brief.
-2. Rule on each comment in the "Rulings" section of the same file: accept or reject, with a one-sentence reason. The test is whether the comment really makes the result satisfy `requirements.md` better, not whether it sounds expert. Accept suggestions only when they are clearly worth it, so the work does not grow more complex with every round.
-3. If you think a blocking comment should be rejected, you cannot wave it through yourself. Give the user the comment and your reasoning and let them decide.
-4. If anything was accepted → dispatch A to make the changes → dispatch B again, listing the items already rejected so they are not raised again. The review file number N increases.
-5. The loop passes when every blocking comment in the latest round is resolved (changed and confirmed by the next round, or the user decided not to change it).
-6. At most 3 rounds per entry into the step. If blocking comments remain after 3 rounds, stop, give the user the remaining items with each side's reasoning, and let them decide what to do.
+**review 循环**（第 4 步和第 7 步共用）：
 
-**Going back.** When a later step finds a problem that requires returning to an earlier one:
+1. 派 B 写 review 文件。意见分"阻塞"和"建议"两级，定义在给 B 的说明里。
+2. 你逐条裁决，写在同一文件的"裁决"部分：采纳或不采纳，附一句理由。标准是这条意见是否确实让产物更能满足 `requirements.md`，而不是它听起来是否专业。建议项只采纳确实值得的，避免每一轮都越改越复杂。
+3. 你认为某条阻塞意见不该采纳时，按"什么时候打断用户"判断。小问题由你裁决，并在 `decisions.md` 记一行。大问题由用户决定：在第 4 步，把它放进第 5 步"需要你决定的"里一起问；在第 7 步，现在就问。
+4. 有采纳项 → 派 A 修改。
+5. 修改之后：
+   - 第 4 步：你自己对照裁决核对每条采纳的意见是否改到位。只有当方案的做法、模块划分或接口因此变了，才再派一个全新的 B review 一轮。最多 2 轮。
+   - 第 7 步：再派一个全新的 B review 这次修改，并把已决定不采纳的事项列给它，避免重复提出。最多 3 轮。
+   - review 文件的编号 N 递增。
+6. 通过的条件：阻塞意见都已处理（已修改并经核对，或已裁决不改）。
+7. 轮数用完仍有阻塞意见时：第 4 步，把剩余事项和各方理由放进第 5 步"需要你决定的"；第 7 步，停下来列给用户，由用户决定怎么办。
 
-- In `status.md`, set the current step to the target step and append a row giving the reason. Every step after the target that had passed must be done again.
-- Review rounds start counting again; file numbers continue from where they left off.
-- If the design (`design.md`) changes in substance, it must go through steps 3 and 4 again. The user's earlier approval does not carry over to a new design.
+**回退。** 后面的步骤发现问题、需要回到前面的步骤时：
 
-**Fixing code.** Any change to code after step 5 (fixing review comments, fixing test failures, fixing demo problems, reverting out-of-scope changes) is done by A. Afterwards the affected tests are rerun and B reviews that change.
+- 在 `status.md` 把当前步骤改为目标步骤，追加一行写明原因。目标步骤之后已通过的步骤都要重新走。
+- review 轮次重新计数，文件编号接着之前的往下编。
+- 方案（`design.md`）有实质变化时，要重新经过第 4 步和第 5 步。用户之前的批准不延续到新方案。
 
-## Tasks that span several repositories
+**修复代码。** 第 6 步之后任何对代码的修改（修 review 意见、修测试失败、修验收问题、还原方案外改动、按用户意见改掉某个代为做的决定）都由 A 做。改完后重跑受影响的测试，并让 B review 这次修改。
 
-When a task needs changes in more than one git repository, the 9 steps stay the same, but implementation and code review are split by repository and run in parallel. This is faster, and it keeps each programmer's context limited to one codebase.
+## 并行开发
 
-- **One process directory.** It stays in the repository where the session started. Paths to it are absolute, so programmers working in other repositories can read it.
-- **One workspace per repository.** As soon as a repository is known to be involved (the user says so, or step 1 or 2 reveals it), and no later than the start of step 5, decide its workspace with the same rules as above: worktree if it has uncommitted changes, otherwise ask; branch name by that repository's own convention. Record every repository's workspace, branch, and baseline commit in `status.md`.
-- **Steps 1–4 are still done once, for the whole task.** One A clarifies and writes a single `design.md`. The design groups "Scope of changes" by repository and adds a "Cross-repository contract" section: the interfaces, data formats, and ordering that the repositories must agree on. That contract is what lets the repositories be built in parallel.
-- **Step 5: one A per repository, dispatched in parallel.** Each changes only its own repository. If one of them finds the contract has to change, it stops and reports; you update the design and inform the others, because a contract change affects every side.
-- **Step 6: one fresh B per repository, dispatched in parallel**, separate from the implementers. Each reviews its repository's diff against the design and checks that its side honors the contract. Files are named `code-review-<repo>-N.md`, and the review loop runs per repository.
-- **Step 7 tests the whole.** Per-repository tests may run in parallel, but the acceptance criteria are verified end to end with all repositories' changes together.
-- **Steps 8 and 9 cover every repository.** The change summary audits each repository's diff against its part of the scope; deployment follows each repository's own method, in the order the contract requires.
+需求可以拆成互不干扰的几部分时，实现阶段并行做，这样更快，也让每个程序员的上下文更小。有两种情况：
 
-Do not split work inside a single repository across parallel programmers; their changes would collide.
+- **涉及多个 git 仓库**：每个仓库是一部分。
+- **同一个仓库内的多个模块**：只有当各部分要改的文件完全不重叠，且它们之间的接口已经在方案里写明时，才拆开并行。做不到就由一个程序员做，否则改动会互相冲突。
 
-## The workflow
+规则：
 
-### Step 1 — Clarify requirements (A)
+- **过程目录只有一个。** 放在会话启动的那个仓库里。指向它的路径都用绝对路径，在其他仓库工作的程序员也能读到。
+- **每个仓库一个工作区。** 一旦知道某个仓库要改（用户说了，或第 2、3 步发现了），最晚在第 6 步开始前，按上面的规则确定它的工作区：有未提交改动就建 worktree，否则在第 5 步审批时一并问用户；分支名按那个仓库自己的习惯。把每个仓库的工作区、分支、基线 commit 都记进 `status.md`。同一仓库内并行的几部分共用一个工作区。
+- **第 2–5 步仍然只做一次，针对整个需求。** 由一个 A 澄清需求并写一份 `design.md`。方案里"改动范围"按部分分组，并增加"分工与约定"一节：每一部分的范围，以及各部分之间必须一致的接口、数据格式、先后顺序。有了这份约定，各部分才能并行开发。
+- **第 6 步：每一部分一个 A，并行派发。** 各自只改自己那部分。谁发现约定必须修改，就停下报告；由你更新方案并通知其他人，因为约定的变化影响每一方。同一仓库内并行时，每个 A 只运行自己那部分的测试，整体检查留到第 8 步。
+- **第 7 步：每个仓库一个全新的 B**，多个仓库时并行派发。各自对照方案 review 本仓库的全部 diff，并检查是否遵守约定。多个仓库时文件命名为 `code-review-<仓库名>-N.md`，review 循环按仓库各自进行。
+- **第 8 步验证整体。** 各仓库的测试可以并行跑，但验收标准要把所有部分的改动合在一起端到端验证。
+- **第 9、10 步覆盖每个仓库。** 变更总结对照各仓库在方案里的改动范围，逐个检查它的 diff；启动或部署按各仓库自己的方式，顺序遵循约定的要求。
 
-Dispatch A to read the request and the related code, and to write its understanding, the acceptance criteria, and its open questions into `requirements.md`.
+## 流程
 
-Handle the questions one by one, filling in the answer and its source in the Q&A log:
+### 第 1 步 需求复述（你）
 
-- If you can answer, you must have a source: the user's own words, or a fact in the code or docs (A's question gives the relevant location; checking that location is enough).
-- If you have no source, ask the user. Do not guess a "reasonable" answer to spare the user an interruption; one wrong assumption at this stage wastes all the work after it. Collect the questions and ask them in one go.
+用你自己的话把需求复述一遍，发给用户确认。用户可能打错了字、漏粘贴了一段内容，或者你把一句话理解成了另一个意思；这类错误在这里发现只花一条消息，到后面发现就是整套方案白做。
 
-After answering, dispatch A again to confirm there are no new questions. Repeat until there are none.
+- 只依据用户说的话来复述，不读代码，不设计方案，也不在这里提实现层面的问题（那是第 2 步的事）。
+- 写清三件事：要做什么、做完后是什么效果、你理解的范围边界（包括你认为不在范围内的）。几句话即可，不要扩写成文档。
+- 不要照抄原文。换一种说法才能暴露理解上的偏差。
+- 原文里像是打错、被截断、指代不明或前后对不上的地方，明确指出来并问用户，不要自己猜一个意思补上。
 
-**Gate: A reports no open questions, and `requirements.md` has acceptance criteria that can each be verified.**
+同一条消息里带上需求简称和工作区的安排（见"确定工作区"），让用户一次回复完。
 
-### Step 2 — Design (A)
+**不要干等。** 发出消息的同时，把复述写进 `requirements.md` 的"需求复述"一节并标注"待用户确认"，然后在后台派 A 开始第 2 步。这时工作区还没定，A 在当前仓库目录里只读代码。原文明显有残缺、你没把握理解对时，等用户回复后再派。平台不支持后台运行 subagent 时，也等用户回复后再派。
 
-Dispatch A to write `design.md` from `requirements.md`.
+用户有更正就改写后再发一次，直到用户确认；更正会影响 A 正在做的事时，把更正转给 A。确认后去掉"待用户确认"的标注，"原始需求"保持原文不动，然后创建并记录工作区。
 
-**Gate: `design.md` contains every section listed in the step 2 brief.**
+**关卡：用户明确确认你的复述是对的，复述已写入 `requirements.md`，工作区已记入 `status.md`。**
 
-### Step 3 — Design review (B)
+### 第 2 步 需求澄清（A）
 
-Give B only `requirements.md` and `design.md`. Run the review loop, producing `design-review-N.md`.
+派 A 阅读需求和相关代码，把需求理解和验收标准写进 `requirements.md`。A 遇到不清楚的地方会自己分类：大问题写进问答记录，小问题自己选一个答案记进 `decisions.md`。
 
-**Gate: the review loop passes.**
+你处理问答记录里的每个问题，把回答和出处填进去：
 
-### Step 4 — User approval (you)
+- 你能回答的，必须有出处：用户说过的原话，或代码、文档里的事实（A 的问题里会给出相关位置，核对那个位置即可）。
+- 你判断其实是小问题的，由你决定，移到 `decisions.md`。
+- 剩下的问用户。攒在一起一次问完，每个问题附上可选的答案和你的建议，让用户能用很短的话回复。
 
-Do not hand `design.md` to the user as is. Reorganize it from the point of view of a reviewer seeing the design for the first time, using the "Presenting the design" structure in `references/templates.md`.
+这一步只派 A 一轮。用户回答后不再派 A 回来确认；回答对需求理解和验收标准的影响，由第 3 步的 A 在开始设计前更新。
 
-Then stop and wait for explicit approval. If the reply is vague ("looks fine"), ask once more to confirm. If the user asks for changes:
+**关卡：问答记录里的每个问题都有回答，且 `requirements.md` 里有可逐条验证的验收标准。**
 
-- Small adjustment → dispatch A to edit `design.md`, tell the user what changed, and get explicit approval again.
-- A change to the design's structure → go back to step 3.
+### 第 3 步 方案设计（A）
 
-**Gate: the user explicitly approved, and their words are recorded in `status.md`.** Until then nobody may change product code.
+派 A（尽量续用第 2 步的那个）根据 `requirements.md` 写 `design.md`。
 
-### Step 5 — Implement (A)
+方案是 high level 的，写给人看：讲清楚做法、涉及哪些模块、模块之间的接口、取舍和风险，一两页即可。不写实现细节，那些留给第 6 步的程序员决定，由代码 review 把关。改动涉及 3 个及以上模块，或改变了模块之间的调用关系、数据流时，A 在方案里画一张简单的架构图。
 
-On first entry, confirm the workspace is as it was when decided: HEAD is the baseline commit and there are no uncommitted changes. If not, find out why before continuing.
+设计中遇到的小问题，A 记进 `decisions.md`；遇到大问题，A 写在回报里，你放进第 5 步"需要你决定的"。大问题不解决就无法继续设计时，现在问用户。
 
-Dispatch A to implement `design.md` in the workspace. When A reports that the design does not work or that files outside the listed scope must change, you decide:
+**关卡：`design.md` 包含第 3 步任务说明里列出的全部章节。**
 
-- Small deviation → agree, and record what deviated and why in the "Deviations" section of `design.md`.
-- It changes the design's approach or scope → tell the user and handle it as "Going back".
+### 第 4 步 方案 review（B）
 
-**Gate: A reports the implementation complete, and the list of changed files is recorded in `status.md`.**
+只给 B `requirements.md`、`design.md` 和 `decisions.md`。这一步的目的是拦住方向性的错误，不是打磨细节。按 review 循环进行，产出 `design-review-N.md`。
 
-### Step 6 — Code review (B)
+**关卡：review 循环通过，或剩余的阻塞意见已列入第 5 步待用户决定。**
 
-Give B `requirements.md`, `design.md`, the workspace path, and the baseline commit. Run the review loop, producing `code-review-N.md`.
+### 第 5 步 用户审批（你）
 
-**Gate: the review loop passes.**
+这是用户集中思考的最后一步，之后的工作交给小组。把需要他看的东西一次给全：
 
-### Step 7 — Test (A)
+- 不要把 `design.md` 原样丢给用户。站在一个第一次看到这份方案的评审者的角度重新组织，结构见 `references/templates.md` 的"方案呈现"。
+- 方案里有架构图时，放进呈现里。
+- 列出 `decisions.md` 里到目前为止代他做的决定。这些默认生效，用户不需要逐条回复，有异议的指出来即可。
+- 列出需要他决定的大问题，每个附上选项和你的建议。
 
-Dispatch A to carry out the test plan, verify each acceptance criterion, and write `test-report.md`.
+然后停下，等用户明确批准。回应含糊时（"看起来不错"），再追问一句确认。用户提出修改时：
 
-The words "tests pass" are not evidence. Read `test-report.md`, confirm every acceptance criterion has a command and real output, then rerun the one or two most important commands yourself to check.
+- 小调整（包括改掉某个代为做的决定）→ 派 A 改 `design.md`，把改动点告诉用户，再取得一次明确批准。
+- 涉及方案结构的改动 → 回退到第 4 步。
 
-- Something fails → handle it as "Fixing code", then test again.
-- Some criteria cannot be verified locally (for example, only in the dev environment) → list them for the user; with their consent, defer them to the step 9 demo and record that in `status.md`.
-- The project's existing tests, lint, and build must show no new failures. Failures that already existed at the baseline are noted separately in the report.
+批准后，把 `decisions.md` 里已展示的行标为"已确认"或用户改成的结果。
 
-**Gate: every acceptance criterion is backed by real output or deferred to the demo with the user's consent, and your reruns match the report.**
+**关卡：用户明确批准，且原话已记入 `status.md`。** 在此之前任何人都不能改业务代码。
 
-### Step 8 — Change summary (you)
+### 第 6 步 实现（A）
 
-The purpose of this step is to catch unintended changes, so it must be based on the real diff, not on A's report. In this step you read the diff yourself.
+首次进入时，先确认工作区和确定时一样：HEAD 是基线 commit，没有未提交的改动。不一致就先查清原因再继续。
 
-In the workspace, run `git status` (it shows untracked new files) and `git diff <baseline commit>`. Compare against "Scope of changes" and "Deviations" in `design.md`, write `summary.md` from the template, and walk the user through it.
+派 A 在工作区里按 `design.md` 实现。实现细节由 A 决定；其中的小问题 A 自己决定并记进 `decisions.md`。A 报告方案行不通，或必须改动方案"改动范围"之外的模块时，由你按"什么时候打断用户"判断：
 
-Explain the reason for each out-of-scope change; ask A when you cannot tell. The user decides for each one whether to keep or revert it. Reverts are handled as "Fixing code".
+- 小偏离 → 同意，并把偏离的内容和原因记到 `design.md` 的"实现偏离"一节。
+- 改变了方案的做法或范围 → 告诉用户，按"回退"处理。
 
-**Gate: the user has seen the summary and every out-of-scope change has a decision.**
+**关卡：A 报告实现完成，且改动文件清单已记入 `status.md`。**
 
-### Step 9 — Deploy to dev and demo (you)
+### 第 7 步 代码 review（B）
 
-Deploy from the workspace. How to deploy differs per project; look in this order: `.dev-crew/config.md` in the main repository, the project's CLAUDE.md / AGENTS.md / README, deploy scripts. If you cannot find it, ask the user and record the answer in `.dev-crew/config.md` so it is not asked again.
+给 B `requirements.md`、`design.md`、工作区路径和基线 commit。按 review 循环进行，产出 `code-review-N.md`。
 
-Before deploying, tell the user the exact commands you will run and the target environment, and wait for confirmation. If deploying requires a commit or push first (for example, CI triggered by a push), get consent for that in the same confirmation. Deploy only to dev; other environments are outside this workflow.
+**关卡：review 循环通过。**
 
-After deploying, take the user through the acceptance criteria one by one: give the steps and the expected result for each, and let the user confirm. If the demo reveals a problem, go back to step 5.
+### 第 8 步 测试（A）
 
-**Gate: the user confirms the demo passed.** Mark the task done in `status.md` and tell the user the workspace path and branch name. Committing, merging, and cleanup are theirs to decide.
+派 A 执行测试计划、逐条验证验收标准，写 `test-report.md`。
 
-## Talking to the user
+"测试通过"这句话本身不算证据。读 `test-report.md`，确认每条验收标准都有对应的命令和真实输出，然后自己重跑其中最关键的一两条命令核对。
 
-- On entering each step, tell the user in one sentence which step this is and what is happening.
-- When you need an answer or an approval, state the question or the design in full so the user can respond without scrolling back.
-- Report faithfully: blocking review comments, test failures, and out-of-scope changes are passed on as they are, not softened.
-- Reply in the user's language.
+- 有失败 → 按"修复代码"处理，然后重新测试。
+- 有本地无法验证的条目（例如只能在 dev 环境验证）→ 记入 `status.md`，留到第 10 步用户验收时验证。不用为此单独问用户，在第 9 步的总结里告诉他。
+- 项目原有的测试、lint、构建不能有新增的失败。基线上原本就失败的，在报告里单独注明。
+
+**关卡：每条验收标准都有真实输出佐证，或已记录为留到用户验收时验证；且你重跑的结果与报告一致。**
+
+### 第 9 步 变更总结（你）
+
+这一步的目的是抓出非预期的改动，所以依据必须是真实的 diff，不是 A 的汇报。这一步你要自己读 diff。
+
+在工作区里运行 `git status`（会显示未跟踪的新文件）和 `git diff <基线 commit>`，对照 `design.md` 的"改动范围"和"实现偏离"，按模板写 `summary.md`。方案的改动范围写到模块一级，所以"方案外的改动"指的是：改到了范围之外的模块，或者范围之内但与这个需求无关的改动。逐个说明原因；说不清的问 A。
+
+总结里还要列出 `decisions.md` 中用户还没确认过的决定，每条写明怎么改回来。
+
+把总结发给用户，和第 10 步的内容合成一次：
+
+- 本地启动 → 先把程序启动起来，再用一条消息发出变更总结、代为做的决定、验收清单。
+- 远程 dev → 用一条消息发出变更总结、代为做的决定，并请用户确认部署；部署完成后再发验收清单。
+
+**关卡：`summary.md` 已写完并发给用户。**
+
+### 第 10 步 启动与用户验收（你）
+
+把改动后的程序运行起来，交给用户亲自验收。运行方式有两种：
+
+- **本地启动**：在工作区里把程序跑起来。
+- **远程 dev 环境**：把工作区的改动部署到 dev 环境。
+
+用哪一种、具体怎么做，按这个顺序找：主仓库的 `.dev-crew/config.md`、项目的 CLAUDE.md / AGENTS.md / README、启动或部署脚本。两种都可行又没有约定时，问用户选哪一种。找不到做法就问用户，并把答案记到 `.dev-crew/config.md`，下次不用再问。
+
+- 本地启动：告诉用户你执行的命令，然后启动，让程序保持运行。确认它真的起来了（端口可访问、日志无报错）再交给用户。
+- 远程 dev：部署前告诉用户你要执行的具体命令和目标环境，等用户确认。如果部署需要先 commit 或 push（例如靠 push 触发 CI），在同一次确认里一并征得同意。只部署到 dev，其他环境不属于本流程。
+
+启动后，把验收需要的东西一次发给用户：访问地址或使用方式，以及一份按验收标准逐条列出的清单，每条写明操作步骤和预期结果（包括留到这一步验证的条目）。由用户自己操作，逐条告诉你通过还是有问题。
+
+用户的回复里可能包含三类事，分别处理：
+
+- 验收发现的问题 → 回退到第 6 步。
+- 方案外的改动要还原 → 按"修复代码"处理。没提到的视为保留。
+- 对某个代为做的决定有异议 → 按"修复代码"改成用户要的。没提到的视为确认。
+
+处理完后在 `decisions.md` 和 `summary.md` 里更新结果。
+
+**关卡：用户确认验收通过，且他要求还原或修改的事项都已处理。** 在 `status.md` 标记完成，并告诉用户工作区路径和分支名。提交、合并、清理由用户决定。
+
+## 和用户沟通
+
+- 用户可能同时在处理好几个需求。每条需要他回应的消息，开头先写需求名称和现在是第几步，再用一两句话交代背景，让他不用翻前面的记录就能回应。
+- 需要他做决定时，给出选项和你的建议，让他能用很短的话回复。同一时间的多个问题合成一条消息。
+- 不需要他回应的进展，一句话带过即可，不要让他以为需要处理。
+- 如实转述：阻塞的 review 意见、测试失败、方案外的改动都照原样告知，不做美化。
+- 用用户使用的语言回复。

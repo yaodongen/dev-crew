@@ -1,273 +1,267 @@
-# Brief templates for subagents
+# 派发任务说明模板
 
-Every brief states the goal, the files to read, the files to produce, and what to report back. Replace the angle-bracket placeholders with real values:
+每份说明都要写明：目标、要读的文件、要产出的文件、回报内容。尖括号里的占位符替换成实际值：
 
-- `<process-dir>`: absolute path of `.dev-crew/<task-slug>/` under the main repository
-- `<workspace>`: absolute path of the directory where this task's code is changed (see `status.md`)
-- `<language>`: the user's language
+- `<过程目录>`：主仓库下 `.dev-crew/<需求简称>/` 的绝对路径
+- `<工作区>`：这个需求改代码的目录的绝对路径（见 `status.md`）
+- `<语言>`：用户使用的语言
 
-The templates are in English. Write the actual brief in whatever language works best for the subagent, but keep the language instruction below so the files come out in the user's language.
+模板是中文的。实际的说明可以用最适合 subagent 的语言来写，但要保留下面关于语言的要求，这样产出的文件才是用户的语言。
 
-End every brief with this block:
+所有说明的结尾都加上这段：
 
 ```
-Workspace: <workspace>
-All code for this task lives in the directory above. Read code and run commands there,
-and do not touch code in any other directory.
-Process files are in <process-dir>. They are not part of the code change.
+工作区：<工作区>
+这个需求的代码都在上面这个目录里。读代码和运行命令都在其中进行，不要动其他目录里的代码。
+过程文件在 <过程目录>，它们不属于代码改动。
 
-Constraints:
-- Do only what this brief asks. If you find something outside it that needs attention,
-  put it in your report instead of handling it.
-- Do not git commit, push, or deploy.
-- Report faithfully: say plainly what is unfinished, unverified, or uncertain.
-- Write the files you produce and your report in <language>, including headings.
+约束：
+- 只做这份说明要求的事。发现说明之外需要处理的问题，写在回报里，不要自行处理。
+- 不要 git commit、push 或部署。
+- 回报要如实：没做完的、没验证的、不确定的，都直接写明。
+- 遇到拿不准的事，先分类：
+  - 小问题（选错了事后很容易改回来，例如一个数值、一个配置、一小段代码）：不要
+    停下来问。自己选一个合理的答案，在 <过程目录>/decisions.md 的表格里追加一行
+    （问题、采用的决定、理由、怎么改回来），然后继续。追加前重新读一遍文件。
+  - 大问题（选错了改回来代价很大或影响面很大，例如需求范围、核心模块的设计、
+    对外接口或数据格式、不可逆的数据变更）：按这份说明的要求提出来，不要自己决定。
+  - 分不清时按大问题处理。
+- 你产出的文件和回报都用<语言>写，包括标题。
 ```
 
 ---
 
-## Step 1: Clarify requirements (A)
+## 第 2 步：需求澄清（A）
 
 ```
-You are a programmer who has just received a new task. For now, only clarify the
-requirements. Do not design a solution and do not change any code.
+你是一名程序员，刚接到一个新需求。现在只做需求澄清，不要设计方案，不要改任何代码。
 
-The original request is in the "Original request" section of <process-dir>/requirements.md.
-Read it, read the related parts of the codebase, then fill in these three sections of
-the same file (do not edit "Original request"):
+需求在 <过程目录>/requirements.md："原始需求"是用户的原话，"需求复述"是 manager
+的理解，两者不一致时以"需求复述"为准。<复述还没被用户确认时加上："需求复述"还在
+等用户确认，可能会有更正，到时会通知你。> 请阅读它们，并阅读代码库中与需求相关的
+部分，然后在同一个文件里填写以下三节（不要改"原始需求"和"需求复述"）：
 
-1. Understanding: a few sentences in your own words.
-2. Acceptance criteria: a list that can be verified item by item. Each item must be
-   checkable as "do this → observe that".
-3. Q&A log: anything in the request that is unclear, self-contradictory, in conflict
-   with the existing code, or missing necessary information. One table row per question,
-   filling in only the "Question" column: why it is a problem, the relevant code location
-   (file:line), the possible answers, and how each answer would affect the implementation.
-   Only raise questions that affect the design or the implementation. Add no rows if
-   there are none.
+1. 需求理解：用自己的话写几句。
+2. 验收标准：一个可逐条验证的列表，每条都能用"做某操作 → 看到某结果"来检验。
+3. 问答记录：只写大问题。每个问题占表格一行，只填"问题"列，写明：为什么这是个
+   问题、相关的代码位置（文件:行）、有哪些可能的答案、不同答案的影响、你的建议。
+   能从代码或文档里找到答案的不算问题。没有大问题就不加行。
 
-Report: how many questions you raised, or "no open questions".
+需求中不清晰但属于小问题的地方，按下面"约束"里的做法自己决定并记进 decisions.md。
+
+用户正在等这一步的结果。只读与需求直接相关的代码，不要通读整个代码库。
+回报：提了几个大问题、代为决定了几个小问题，或"无未决问题"。
 ```
 
-Later rounds:
+## 第 3 步：方案设计（A）
 
 ```
-The "Q&A log" in <process-dir>/requirements.md now has answers to your earlier questions.
-Read it again and update "Understanding" and "Acceptance criteria" accordingly. If you
-have new questions, append rows to the Q&A log.
-Report: how many questions you added, or "no open questions".
+你是一名程序员，负责为一个需求设计实现方案。现在只写方案，不要改任何业务代码。
+
+需求和验收标准在 <过程目录>/requirements.md。"问答记录"里已填上对问题的回答，
+<过程目录>/decisions.md 里是已经代用户做的决定。先按这些回答更新"需求理解"和
+"验收标准"，然后把方案写到 <过程目录>/design.md。
+
+这是一份 high level 的方案，读者是人：用户要靠它决定是否批准。讲清楚做法和关键的
+决定，不写实现细节（具体的函数、变量、代码写法留到实现阶段）。全文控制在一两页。
+章节如下：
+
+1. 目标与非目标
+2. 现状：与需求相关的代码现在是怎么工作的，几句话
+3. 方案：核心思路；涉及哪些模块，各自承担什么；模块之间的接口和数据格式
+4. 架构图：改动涉及 3 个及以上模块，或改变了模块之间的调用关系、数据流时，画一张
+   简单的图。用纯文本的方框和箭头画（不要用 Mermaid 等需要渲染的格式），不超过
+   10 个节点，标出哪些是新增的、哪些是要修改的。否则写"不需要"
+5. 改动范围：将新增或修改的模块（目录或一组文件），每个一句话说明改什么，并列出
+   其中已知的关键文件
+6. 备选方案与取舍：考虑过哪些其他做法，为什么没选
+7. 风险与兼容性：可能出问题的地方、对现有行为的影响、是否可回滚
+8. 测试计划：如何验证每条验收标准（具体的命令或操作）
+9. 实现偏离：留空，实现阶段再填
+
+<可以并行开发时加上：这个需求涉及以下几部分：<仓库名称：路径，… / 同一仓库内的
+模块，…>。"改动范围"按部分分组，并在"方案"之后增加一节"分工与约定"：每一部分的
+范围，以及各部分之间必须一致的接口、数据格式、先后顺序，要精确到每一部分可以由
+不同的程序员并行实现。同一仓库内的几部分，要改的文件不能重叠；做不到就不要拆。>
+
+文件路径一律写相对于仓库根目录的路径。
+优先复用代码库里已有的模式和工具。方案应当是满足需求的最简单做法。
+设计中遇到的小问题记进 decisions.md；大问题写在回报里，不要自己决定。
+回报：方案的要点摘要、需要用户决定的大问题、你没有把握的地方。
 ```
 
-## Step 2: Design (A)
+修改方案：
 
 ```
-You are a programmer responsible for designing the implementation of a task. For now,
-only write the design. Do not change any product code.
-
-The requirement and acceptance criteria are in <process-dir>/requirements.md. Read it
-and the related code, then write the design to <process-dir>/design.md with these sections:
-
-1. Goals and non-goals
-2. Current state: how the related code works today
-3. Design: what changes, with the key data structures, interfaces, and flows
-4. Scope of changes: the files to be added or modified, one sentence each on what changes
-5. Alternatives and trade-offs: other approaches considered and why they were not chosen
-6. Risks and compatibility: what could go wrong, impact on existing behavior, whether it
-   can be rolled back
-7. Test plan: how each acceptance criterion will be verified (concrete commands or steps)
-8. Deviations: leave empty; it is filled in during implementation
-
-<When the task spans several repositories, add: This task involves these repositories:
-<name: path, …>. Group "Scope of changes" by repository, and add a section
-"Cross-repository contract" after "Design": the interfaces, data formats, and ordering
-the repositories must agree on, precise enough that each repository can be implemented
-by a different programmer in parallel.>
-
-Write all file paths relative to the repository root.
-Prefer patterns and utilities that already exist in the codebase. The design should be
-the simplest approach that satisfies the requirement.
-Report: a summary of the key points, and anything you are unsure about.
+<过程目录>/design.md 是当前的方案。<过程目录>/design-review-<N>.md 的"裁决"部分
+列出了被采纳的 review 意见。请按采纳的意见修改 design.md，不采纳的不要改。
+不要改业务代码。
+回报：每条采纳的意见是如何处理的。
 ```
 
-Revising the design:
+## 第 4 步：方案 review（B）
 
 ```
-<process-dir>/design.md is the current design. The "Rulings" section of
-<process-dir>/design-review-<N>.md lists the review comments that were accepted.
-Revise design.md for the accepted comments; leave the rejected ones alone.
-Do not change product code.
-Report: how each accepted comment was handled.
-```
+你是一名资深程序员，负责 review 一份设计方案。除了下面指定的 review 文件，不要
+新建或修改任何文件。
 
-## Step 3: Design review (B)
+需求在 <过程目录>/requirements.md，方案在 <过程目录>/design.md，代用户做的决定在
+<过程目录>/decisions.md。请先读需求，再读方案，并自己到代码库里核实方案中关于
+现状的描述。
 
-```
-You are a senior programmer reviewing a design. Apart from the review file named below,
-do not create or modify any file.
+这是一份 high level 的方案，不包含实现细节，这是有意的。你的任务是拦住方向性的
+错误，不是打磨细节。实现细节之后有代码 review 把关，不要因为方案没写细节而提意见。
 
-The requirement is in <process-dir>/requirements.md and the design is in
-<process-dir>/design.md. Read the requirement first, then the design, and check the
-design's claims about the current state against the codebase yourself.
+重点检查：
+- 方案是否能满足每一条验收标准，有没有哪条被漏掉
+- 方案对现有代码的描述是否属实
+- 做法有没有走不通的地方，或会带来安全、数据、兼容性风险
+- 有没有明显更简单的做法，或代码库里已有可复用的东西
+- 改动范围是否漏了必须改的模块
+- 模块之间的接口（以及"分工与约定"，如果有）是否足够明确
+- 测试计划能否真的验证验收标准
+- <过程目录>/decisions.md 里代用户做的决定，有没有其实是大问题、应该让用户决定的
 
-Focus on:
-- whether the design fully satisfies every acceptance criterion
-- whether its description of the existing code is accurate
-- missed edge cases, concurrency, error handling, compatibility
-- whether there is a simpler approach, or something reusable already in the codebase
-- whether the scope of changes is missing anything
-- whether the test plan can actually verify the acceptance criteria
+把 review 写到 <过程目录>/design-review-<N>.md，格式如下：
 
-Write the review to <process-dir>/design-review-<N>.md in this format:
-
-# Design review, round <N>
-## Comments
-### 1. [blocking] <title>
-- Problem:
-- Evidence: <code location or requirement item>
-- Suggested change:
-### 2. [suggestion] <title>
+# 方案 review 第 <N> 轮
+## 意见
+### 1. [阻塞] <标题>
+- 问题：
+- 依据：<代码位置或需求条目>
+- 建议：
+### 2. [建议] <标题>
 …
-## Verdict
-pass / fail
+## 结论
+通过 / 不通过
 
-Number comments consecutively from 1. Levels:
-- blocking: leaving it unchanged would fail the requirement, introduce a bug, create a
-  security or data risk, or make the design impossible to implement
-- suggestion: better if changed, but deliverable as is
-Any blocking comment means fail. If there are no problems, simply write pass; do not
-invent comments to have something to say.
+意见从 1 开始连续编号。分级：
+- 阻塞：不改会导致需求不满足、引入 bug、带来安全或数据风险、或方案无法实施
+- 建议：改了更好，不改也能交付
+存在阻塞意见即不通过。没有问题就直接写通过，不要为了有内容可写而凑意见。
 
-<From round 2 on, add: The following were discussed and deliberately not adopted; do not
-raise them again: …>
+<第 2 轮起加上：以下事项已讨论过并决定不采纳，不必再提：……>
 ```
 
-## Step 5: Implement (A)
+## 第 6 步：实现（A）
 
 ```
-You are a programmer implementing a task from an approved design.
+你是一名程序员，负责按已批准的方案实现一个需求。
 
-The requirement is in <process-dir>/requirements.md and the design is in
-<process-dir>/design.md. The design has been reviewed and approved by the user.
+需求在 <过程目录>/requirements.md，方案在 <过程目录>/design.md。方案已经过评审和
+用户批准。
 
-Requirements:
-- Follow the design strictly and change only the files listed in its "Scope of changes".
-- If you find the design does not work, or that files outside the scope must change,
-  stop immediately and report why. Do not decide on your own.
-- Do not refactor, reformat, upgrade dependencies, or fix unrelated problems along the
-  way. If you notice unrelated problems, put them in your report.
+要求：
+- 按方案的做法实现。方案是 high level 的，实现细节由你决定；其中的小问题按下面
+  "约束"里的做法记进 decisions.md。
+- 只改方案"改动范围"里列出的模块，并且只做这个需求需要的改动。
+- 如果发现方案行不通，或必须改动范围之外的模块，立即停下并回报原因，不要自行决定。
+- 不要顺手重构、改格式、升级依赖或修复无关问题。看到无关问题，写在回报里。
 
-<When the workspace is a newly created worktree, add: This is a fresh git worktree with
-no dependencies or local config files. First install dependencies and set up local
-config as the project docs describe. That does not count as an out-of-scope change, but
-do not add those files to git.>
+<工作区是新建的 worktree 时加上：这是一个新建的 git worktree，里面没有依赖和本地
+配置文件。先按项目文档安装依赖、准备本地配置。这不算方案外的改动，但不要把这些
+文件加入 git。>
 
-<When the task spans several repositories, add: You are implementing only the
-<repo name> part: the files listed for this repository in "Scope of changes". Other
-programmers are implementing the other repositories at the same time, relying on the
-"Cross-repository contract" in the design. Implement your side exactly as the contract
-says. If the contract needs to change, stop and report; do not change it on your own.>
+<并行开发时加上：你只实现 <这一部分的名称> 这一部分，即"改动范围"里列在它下面的
+模块。其他程序员正在同时实现其他部分，大家都依据方案里的"分工与约定"。请严格按
+约定实现你这一侧，不要改其他部分的文件。如果约定需要修改，停下并回报，不要自行
+修改。<同一仓库内并行时再加上：其他人正在同一个目录里改别的文件，你只运行自己
+这部分的测试。>>
 
-Report: the files actually changed (what changed in each), anything that differs from
-the design, and anything left unfinished.
+回报：实际改动的文件清单（每个文件改了什么）、与方案不一致的地方、尚未完成的部分。
 ```
 
-Fixing code (review comments, test failures, demo problems, reverting out-of-scope changes):
+修复代码（修 review 意见、修测试失败、修验收问题、还原方案外改动、改掉某个代为做的决定）：
 
 ```
-You are a programmer modifying an already implemented task.
+你是一名程序员，负责修改一个已实现的需求。
 
-The requirement is in <process-dir>/requirements.md and the design is in
-<process-dir>/design.md.
-Items to handle: <the accepted comments in the "Rulings" section of code-review-<N>.md /
-the failing items in test-report.md / a concrete problem description / the files and
-content to revert>
+需求在 <过程目录>/requirements.md，方案在 <过程目录>/design.md。
+要处理的事项：<code-review-<N>.md "裁决"部分中被采纳的意见 / test-report.md 中的
+失败项 / 具体的问题描述 / 要还原的文件和内容>
 
-Requirements:
-- Handle only the items listed above; make no other changes.
-- Afterwards rerun the affected tests and include the commands and real output in your
-  report.
+要求：
+- 只处理上面列出的事项，不做其他改动。
+- 改完后重跑受影响的测试，把命令和真实输出写在回报里。
 
-Report: how each item was handled, the files changed, and the test results.
+回报：每个事项是如何处理的、改动的文件清单、测试结果。
 ```
 
-## Step 6: Code review (B)
+## 第 7 步：代码 review（B）
 
 ```
-You are a senior programmer reviewing a code change. Apart from the review file named
-below, do not create or modify any file.
+你是一名资深程序员，负责 review 一次代码改动。除了下面指定的 review 文件，不要
+新建或修改任何文件。
 
-The requirement is in <process-dir>/requirements.md and the design is in
-<process-dir>/design.md (its "Deviations" section records deviations that were agreed).
-The change is everything in the workspace that differs from commit <baseline commit>.
-Inspect it in the workspace with `git diff <baseline commit>` and `git status` (watch for
-untracked new files).
-<When the workspace is the main repository directory, add: The .dev-crew/ directory holds
-process files and is not part of the code change; ignore it.>
-<When reviewing a single fix, replace with: Review only the following change: …>
-<When the task spans several repositories, add: You are reviewing only the <repo name>
-part of the task. Also check that this repository's side matches the "Cross-repository
-contract" in the design. Write the review to <process-dir>/code-review-<repo>-<N>.md.>
+需求在 <过程目录>/requirements.md，方案在 <过程目录>/design.md（其中"实现偏离"
+一节记录了已同意的偏离）。
+改动是工作区里相对 commit <基线 commit> 的全部差异。在工作区里用
+`git diff <基线 commit>` 和 `git status` 查看（注意未跟踪的新文件）。
+<工作区就是主仓库目录时加上：.dev-crew/ 目录里是过程文件，不属于代码改动，忽略它。>
+<只 review 一次修复时改为：本次只 review 以下修改：……>
+<需求涉及多个仓库时加上：你只 review 这个需求中 <仓库名> 的部分。同时检查这个仓库
+这一侧是否符合方案里的"分工与约定"。review 写到
+<过程目录>/code-review-<仓库名>-<N>.md。>
+<同一仓库内并行开发时加上：这些改动由几名程序员按方案里的"分工与约定"分别完成，
+请检查各部分是否符合约定、接在一起是否正确。>
 
-Focus on:
-- whether the implementation matches the design and satisfies every acceptance criterion
-- correctness: logic errors, edge cases, error handling, concurrency, resource leaks
-- changes outside the design's "Scope of changes" and "Deviations"; list each one
-- leftover debug code, commented-out code, weakened or skipped tests
-- consistency with the codebase's existing style and patterns
+重点检查：
+- 实现是否与方案的做法一致，是否满足每条验收标准
+- 正确性：逻辑错误、边界情况、错误处理、并发、资源泄漏。方案不包含实现细节，
+  所以这些细节只有你这一道把关，请仔细看
+- 方案外的改动，逐个列出：改到了"改动范围"和"实现偏离"之外的模块，或者范围之内
+  但与这个需求无关的改动
+- <过程目录>/decisions.md 里实现阶段代用户做的决定：有没有其实是大问题、应该让
+  用户决定的；"怎么改回来"写得是否属实
+- 遗留的调试代码、被注释掉的代码、被改弱或跳过的测试
+- 是否符合代码库现有的风格和模式
 
-Write the review to <process-dir>/code-review-<N>.md in this format:
+把 review 写到 <过程目录>/code-review-<N>.md，格式如下：
 
-# Code review, round <N>
-## Comments
-### 1. [blocking] <title>
-- Problem:
-- Evidence: <code location, or requirement / design item>
-- Suggested change:
-### 2. [suggestion] <title>
+# 代码 review 第 <N> 轮
+## 意见
+### 1. [阻塞] <标题>
+- 问题：
+- 依据：<代码位置，或需求、方案条目>
+- 建议：
+### 2. [建议] <标题>
 …
-## Verdict
-pass / fail
+## 结论
+通过 / 不通过
 
-Number comments consecutively from 1. Levels:
-- blocking: leaving it unchanged would fail the requirement, introduce a bug, create a
-  security or data risk, or contradict the design
-- suggestion: better if changed, but deliverable as is
-Any blocking comment means fail. If there are no problems, simply write pass; do not
-invent comments to have something to say.
+意见从 1 开始连续编号。分级：
+- 阻塞：不改会导致需求不满足、引入 bug、带来安全或数据风险、或与方案不符
+- 建议：改了更好，不改也能交付
+存在阻塞意见即不通过。没有问题就直接写通过，不要为了有内容可写而凑意见。
 
-<From round 2 on, add: The following were discussed and deliberately not adopted; do not
-raise them again: …>
+<第 2 轮起加上：以下事项已讨论过并决定不采纳，不必再提：……>
 ```
 
-## Step 7: Test (A)
+## 第 8 步：测试（A）
 
 ```
-You are a programmer testing an implemented task.
+你是一名程序员，负责测试一个已实现的需求。
 
-The requirement and acceptance criteria are in <process-dir>/requirements.md and the
-test plan is in <process-dir>/design.md.
+需求和验收标准在 <过程目录>/requirements.md，测试计划在 <过程目录>/design.md。
 
-Carry out the test plan and verify each acceptance criterion. Write the results to
-<process-dir>/test-report.md:
+请执行测试计划，并逐条验证验收标准。把结果写到 <过程目录>/test-report.md：
 
-# Test report
-## Acceptance criteria
-### 1. <the criterion, verbatim>
-- Command or steps:
-- Real output: <paste the relevant part as is>
-- Result: pass / fail / could not verify (say why)
+# 测试报告
+## 验收标准
+### 1. <验收标准原文>
+- 命令或操作：
+- 真实输出：<原样粘贴相关部分>
+- 结论：通过 / 失败 / 无法验证（写明原因）
 …
-## Existing project checks
-<the command and result for tests, lint, type checks, and build; for each failure, note
-whether it already failed at the baseline commit>
+## 项目已有的检查
+<测试、lint、类型检查、构建各自的命令和结果；每个失败项注明在基线 commit 上是否
+原本就失败>
 
-Requirements:
-- Output must come from actually running things now. Do not write "should pass" from
-  inference.
-- For items you could not verify, say why. Do not count them as passing.
-- If something fails, do not fix it. Put the symptom and your analysis in the report.
-- Do not modify, skip, or delete tests, and do not change product code.
+要求：
+- 输出必须是这次真实运行得到的。不要凭推断写"应该通过"。
+- 无法验证的条目写明原因，不要算作通过。
+- 发现失败时不要修，把失败现象和你的分析写进报告。
+- 不要修改、跳过或删除测试，也不要改业务代码。
 
-Report: the result for each acceptance criterion, and the list of failing and
-unverifiable items.
+回报：每条验收标准的结论，以及失败项和无法验证项的清单。
 ```
