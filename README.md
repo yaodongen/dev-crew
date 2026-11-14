@@ -2,6 +2,10 @@
 
 **简体中文** | [English](./README.en.md)
 
+写这个 skill 的背景和思考：[为什么 AI 让编程更累了？我的思考和解决办法](<./为什么AI让编程更累了？我的思考和解决办法.md>)
+
+**dev-crew 是什么？**
+
 dev-crew 把一个编程 agent 会话变成一位 manager：它按带关卡的流程推进一个正式的开发需求，把具体工作交给程序员 subagent，把 review 交给另外的、全新的 subagent。
 
 **需求复述 → 需求澄清 → 方案设计 → 方案 review → 你审批 → 实现 → 代码 review → 测试 → 变更总结 → 启动并由你验收**
@@ -10,7 +14,6 @@ dev-crew 把一个编程 agent 会话变成一位 manager：它按带关卡的�
 
 它是一个纯粹的 [Agent Skill](https://agentskills.io)：一个 `SKILL.md` 加两个参考文件，没有代码，没有依赖。
 
-写这个 skill 的背景和思考：[为什么 AI 让编程更累了？我的思考和解决办法](<./为什么AI让编程更累了？我的思考和解决办法.md>)
 
 ## 为什么需要它
 
