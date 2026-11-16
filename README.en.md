@@ -91,7 +91,7 @@ flowchart LR
 |---|---|---|---|
 | 1 | Restate the request | The manager restates the request to **you** in its own words and settles where the code will be changed; while you reply, programmer A is already reading the code in the background | You confirm it understood correctly |
 | 2 | Clarify requirements | Programmer A checks the request against the code; major questions go to **you** in one batch, minor ones are decided for you and logged | Every major question answered; verifiable acceptance criteria |
-| 3 | Design | Programmer A writes a high-level design, a page or two, no implementation detail | `design.md` is complete |
+| 3 | Design | Programmer A writes a high-level design, a page or two, no implementation detail; when several modules are involved, each module is designed in parallel by its own owner | `design.md` is complete |
 | 4 | Design review | Fresh programmer B looks only for wrong-direction problems, usually 1 round, at most 2; the manager rules on each comment | No unresolved blocking comment |
 | 5 | Approval | The manager presents the design to **you**: an architecture diagram when several modules are involved, the decisions made for you, and what you need to decide | You explicitly approve. No code is touched before this |
 | 6 | Implement | Programmer A implements the design, deciding and logging the details; several programmers in parallel when the work can be split | Implementation reported complete |
@@ -117,6 +117,10 @@ The manager proposes a branch name that follows your project's existing naming c
 - **Major**: costly to reverse or wide in impact, such as whether to change the design of a core module. Only these are brought to you, and as far as possible before step 5.
 
 The decisions made for you are shown at step 5 and again at acceptance. They stand by default; you speak up only if you disagree.
+
+### Multi-module tasks: one owner per module
+
+Each module is best understood by someone who reads only that module. When a change touches three or more modules, or changes an interface between modules, the manager switches the design step automatically: programmer A writes the overall approach and the contract between modules, then each module gets an owner who reads that module in depth, designs its part, and checks whether the contract works on its side; finally A merges everything into one design. You still approve a single design of a page or two. Each module is then implemented by its owner.
 
 ### Parallel work
 
