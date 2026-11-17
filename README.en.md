@@ -91,7 +91,7 @@ flowchart LR
 |---|---|---|---|
 | 1 | Restate the request | The manager restates the request to **you** in its own words and settles where the code will be changed; while you reply, programmer A is already reading the code in the background | You confirm it understood correctly |
 | 2 | Clarify requirements | Programmer A checks the request against the code; major questions go to **you** in one batch, minor ones are decided for you and logged | Every major question confirmed by you; verifiable acceptance criteria |
-| 3 | Design | Programmer A writes a high-level design, a page or two, no implementation detail; when several modules are involved, each module is designed in parallel by its own owner | `design.md` is complete |
+| 3 | Design | If the request changed several times, the manager first cleans up the records and keeps only the latest; then programmer A writes a high-level design, a page or two, no implementation detail; when several modules are involved, each module is designed in parallel by its own owner | `design.md` is complete |
 | 4 | Design review | Fresh programmer B looks only for wrong-direction problems, usually 1 round, at most 2; the manager rules on each comment | No unresolved blocking comment |
 | 5 | Approval | The manager presents the design to **you**: an architecture diagram when several modules are involved, the decisions made for you, and what you need to decide | You explicitly approve. No code is touched before this |
 | 6 | Implement | Programmer A implements the design, deciding and logging the details; several programmers in parallel when the work can be split | Implementation reported complete |
