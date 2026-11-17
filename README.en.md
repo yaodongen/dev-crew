@@ -90,17 +90,17 @@ flowchart LR
 | # | Step | Who | Gate to pass |
 |---|---|---|---|
 | 1 | Restate the request | The manager restates the request to **you** in its own words and settles where the code will be changed; while you reply, programmer A is already reading the code in the background | You confirm it understood correctly |
-| 2 | Clarify requirements | Programmer A checks the request against the code; major questions go to **you** in one batch, minor ones are decided for you and logged | Every major question answered; verifiable acceptance criteria |
+| 2 | Clarify requirements | Programmer A checks the request against the code; major questions go to **you** in one batch, minor ones are decided for you and logged | Every major question confirmed by you; verifiable acceptance criteria |
 | 3 | Design | Programmer A writes a high-level design, a page or two, no implementation detail; when several modules are involved, each module is designed in parallel by its own owner | `design.md` is complete |
 | 4 | Design review | Fresh programmer B looks only for wrong-direction problems, usually 1 round, at most 2; the manager rules on each comment | No unresolved blocking comment |
 | 5 | Approval | The manager presents the design to **you**: an architecture diagram when several modules are involved, the decisions made for you, and what you need to decide | You explicitly approve. No code is touched before this |
 | 6 | Implement | Programmer A implements the design, deciding and logging the details; several programmers in parallel when the work can be split | Implementation reported complete |
 | 7 | Code review | Fresh programmer B reviews the diff against the design, up to 3 rounds | No unresolved blocking comment |
 | 8 | Test | Programmer A tests; the manager reruns key commands | Every acceptance criterion backed by real output |
-| 9 | Change summary | The manager reads the real diff and writes up out-of-scope changes and the decisions made for you | The summary is sent to you |
+| 9 | Change summary | The manager reads the real diff and writes up the in-scope changes, the out-of-scope changes, and the decisions made for you | The summary is sent to you |
 | 10 | Run and accept | The manager starts the app locally, or deploys it to a remote dev environment after **you** confirm; **you** check it yourself against the acceptance checklist and confirm the step 9 items at the same time | You confirm acceptance |
 
-The gates are mandatory. If a later step finds a problem, the workflow goes back to the right earlier step and the steps after it are done again.
+The gates are mandatory. Steps 1 and 2 matter most: design does not start until you have confirmed the restatement and every question. If a later step finds a problem, the workflow goes back to the right earlier step and the steps after it are done again.
 
 Steps 1–5 are kept fast because you are waiting: short documents, only direction-level issues. Steps 6–9 are there for quality and take longer, but you do not have to watch them.
 
