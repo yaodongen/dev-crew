@@ -93,7 +93,7 @@ flowchart LR
 | 2 | Clarify requirements | Programmer A checks the request against the code; major questions go to **you** in one batch, minor ones are decided for you and logged | Every major question confirmed by you; verifiable acceptance criteria |
 | 3 | Design | If the request changed several times, the manager first cleans up the records and keeps only the latest; then programmer A writes a high-level design, a page or two, no implementation detail; when several modules are involved, each module is designed in parallel by its own owner | `design.md` is complete |
 | 4 | Design review | Fresh programmer B looks only for wrong-direction problems, usually 1 round, at most 2; the manager rules on each comment | No unresolved blocking comment |
-| 5 | Approval | The manager presents the design to **you**: an architecture diagram when several modules are involved, the decisions made for you, and what you need to decide | You explicitly approve. No code is touched before this |
+| 5 | Approval | The manager presents the design to **you**: an architecture diagram when several modules are involved (drawn with [archify](https://github.com/tt-a1i/archify) if you have it, otherwise a Mermaid page opened in your browser), the decisions made for you, and what you need to decide | You explicitly approve. No code is touched before this |
 | 6 | Implement | Programmer A implements the design, deciding and logging the details; several programmers in parallel when the work can be split | Implementation reported complete |
 | 7 | Code review | Fresh programmer B reviews the diff against the design, up to 3 rounds | No unresolved blocking comment |
 | 8 | Test | Programmer A tests; the manager reruns key commands | Every acceptance criterion backed by real output |

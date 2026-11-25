@@ -106,7 +106,7 @@
 **做法**：<核心思路，一段话；流程复杂时加一个简短的步骤列表>
 
 **架构图**（改动涉及多个模块时才有）
-<design.md 里的纯文本架构图，标出新增和修改的模块>
+<图的链接或文件的绝对路径，以及一句话说明图里新增和修改了哪些模块。不要贴图的源码>
 
 **改动范围**
 | 模块 | 改什么 |
@@ -134,13 +134,51 @@
 请确认是否批准按此方案实现。批准之后，除非遇到影响很大的问题，到验收之前不会再打断你。
 ```
 
-架构图示例：
+## 架构图页面（第 5 步，没有 archify 时）
 
+`design.md` 里的架构图是这样的 Mermaid 代码：
+
+```mermaid
+flowchart LR
+    A[订单页] -- 导出请求 --> B["导出接口（新增）"]
+    B -- 查询 --> C["订单服务（修改）"]
+    B -- 写文件 --> D[文件存储]
 ```
-  [订单页]  ──导出请求──▶  [导出接口 *新增*]  ──查询──▶  [订单服务 *修改*]
-                                 │
-                                 └──写文件──▶  [文件存储]
+
+把它写成 `<过程目录>/architecture.html`，然后替用户在浏览器里打开。把 `<需求名>` 和 `<Mermaid 代码>` 换成实际内容；新增的节点加 `:::added`，修改的加 `:::changed`（例如 `B["导出接口（新增）"]:::added`）：
+
+```html
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><需求名> 架构图</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; background: #fff; color: #222; }
+  h1 { font-size: 20px; }
+  .legend span { display: inline-block; margin-right: 16px; padding: 2px 10px; border-radius: 4px; border: 1px solid; }
+  .added { background: #d9f2e3; border-color: #2e9e5b; }
+  .changed { background: #fde9c8; border-color: #d98a00; }
+</style>
+</head>
+<body>
+<h1><需求名> 架构图</h1>
+<p class="legend"><span class="added">新增</span><span class="changed">修改</span>其余为不变的模块</p>
+<pre class="mermaid">
+<Mermaid 代码>
+    classDef added fill:#d9f2e3,stroke:#2e9e5b,color:#222
+    classDef changed fill:#fde9c8,stroke:#d98a00,color:#222
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+</body>
+</html>
 ```
+
+这个页面从 CDN 加载 Mermaid，需要联网。
 
 ## summary.md（第 9 步）
 
